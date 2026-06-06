@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>分数マスター ✕ 冒険</title>
+<style>
+:root {
+  --sky:#e8f4fd; --blue:#3b82f6; --blue-d:#1d4ed8;
+  --green:#22c55e; --green-d:#15803d;
+  --yellow:#fbbf24; --red:#ef4444; --red-d:#b91c1c;
+  --purple:#a855f7; --orange:#f97316;
+  --bg:#f0f9ff; --card:#ffffff; --text:#1e293b; --muted:#64748b;
+  --sh:0 4px 20px rgba(59,130,246,0.15);
+  --r:18px;
+  --font:'Hiragino Kaku Gothic ProN','Hiragino Sans','Meiryo','Yu Gothic',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── 画面共通 ── */
+.screen{display:none;min-height:100vh;padding:16px}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+
+/* ══════════════════════════════════════════
+   タイトル
+══════════════════════════════════════════ */
+#screen-title{justify-content:center;gap:20px;text-align:center}
+.title-logo{
+  font-size:clamp(2rem,7vw,3.5rem);font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 2px 8px rgba(59,130,246,.25));line-height:1.1
+}
+.title-sub{font-size:1.1rem;color:var(--muted);margin-top:-8px}
+.title-char{font-size:clamp(3rem,10vw,6rem);animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.mode-cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:500px}
+.mode-card{
+  flex:1;min-width:140px;background:var(--card);border:3px solid transparent;
+  border-radius:var(--r);padding:24px 16px;cursor:pointer;
+  transition:all .2s;box-shadow:var(--sh);font-weight:700
+}
+.mode-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(59,130,246,.2)}
+.mode-card.mul{border-color:var(--blue)} .mode-card.div{border-color:var(--purple)}
+.mode-card .emoji{font-size:2.5rem;display:block;margin-bottom:8px}
+
+/* ══════════════════════════════════════════
+   レベル選択
+══════════════════════════════════════════ */
+#screen-level{gap:20px}
+.sh-header{display:flex;align-items:center;gap:12px;width:100%;max-width:600px}
+.back-btn{
+  background:var(--card);border:2px solid #e2e8f0;border-radius:12px;
+  padding:8px 14px;cursor:pointer;font-size:1.2rem;transition:all .2s;
+  line-height:1;font-family:var(--font)
+}
+.back-btn:hover{background:var(--sky)}
+.sh-title{font-size:1.4rem;font-weight:800}
+.level-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;max-width:560px}
+.lv-card{
+  background:var(--card);border:3px solid #e2e8f0;border-radius:var(--r);
+  padding:18px;cursor:pointer;transition:all .2s;box-shadow:var(--sh);
+  position:relative;overflow:hidden
+}
+.lv-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--lc,var(--blue))}
+.lv-card:hover{transform:translateY(-3px);border-color:var(--lc,var(--blue))}
+.lv-card.mix{grid-column:1/-1}
+.lv-num{font-size:.75rem;font-weight:700;color:var(--lc,var(--blue));text-transform:uppercase;letter-spacing:1px}
+.lv-name{font-size:1.1rem;font-weight:800;margin:4px 0}
+.lv-ex{font-size:.8rem;color:var(--muted)}
+.stars-row{display:flex;gap:3px;margin-top:8px}
+.star{font-size:1.1rem;opacity:.3}.star.on{opacity:1}
+
+/* ══════════════════════════════════════════
+   ゲーム画面
+   レイアウト：左ペイン（問題+ステップ+答え） | 右ペイン（キャンバス大）
+══════════════════════════════════════════ */
+#screen-game{
+  padding:0;flex-direction:row;align-items:stretch;
+  min-height:100vh;width:100%;max-width:1200px;margin:0 auto
+}
+
+/* 左ペイン */
+.g-left{
+  width:400px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  padding:14px;gap:10px;
+  overflow-y:auto;
+}
+
+/* 右ペイン：キャンバスを全面 */
+.g-right{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  padding:14px 14px 14px 0;
+  gap:10px;
+}
+
+/* ─ HUD ─ */
+.hud{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border-radius:var(--r);padding:10px 14px;box-shadow:var(--sh);
+  flex-shrink:0
+}
+.hud-item{display:flex;align-items:center;gap:4px;font-size:.85rem;font-weight:700}
+.hud-val{font-size:1.05rem;color:var(--blue)}
+.hud-sep{color:#cbd5e1}
+.combo-badge{
+  background:linear-gradient(135deg,var(--orange),var(--yellow));color:#fff;
+  border-radius:20px;padding:3px 10px;font-size:.78rem;font-weight:800;
+  display:none;animation:pulse .5s ease;margin-left:auto
+}
+.combo-badge.on{display:block}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+/* ─ プログレス ─ */
+.prog-wrap{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border-radius:50px;padding:6px 12px;box-shadow:var(--sh);flex-shrink:0
+}
+.prog-bar{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:4px;transition:width .4s}
+.prog-text{font-size:.8rem;font-weight:700;color:var(--muted);white-space:nowrap}
+
+/* ─ 問題カード ─ */
+.q-card{
+  background:var(--card);border-radius:var(--r);padding:18px 20px;
+  box-shadow:var(--sh);border-left:5px solid var(--blue);flex-shrink:0
+}
+.q-lbl{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+.q-prob{
+  font-size:clamp(1.9rem,4vw,2.8rem);font-weight:900;letter-spacing:2px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;line-height:1.4
+}
+.q-frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1.1;vertical-align:middle}
+.q-frac .fn,.q-frac .fd{font-size:clamp(1rem,2.5vw,1.6rem)}
+.q-frac .fl{width:100%;height:3px;background:currentColor;margin:2px 0;border-radius:2px}
+.q-op{font-size:clamp(1.3rem,3vw,1.9rem);color:var(--muted);font-weight:900}
+
+/* ─ ステップパネル ─ */
+.steps-panel{
+  background:var(--card);border-radius:var(--r);padding:16px 18px;
+  box-shadow:var(--sh);flex:1;overflow-y:auto;min-height:0
+}
+.steps-ttl{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
+.step-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;opacity:.35;transition:opacity .3s}
+.step-row.active{opacity:1}
+.step-row.done{opacity:.65}
+.step-num{
+  width:24px;height:24px;border-radius:50%;background:#e2e8f0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:800;flex-shrink:0;margin-top:3px;transition:all .3s
+}
+.step-row.active .step-num{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(59,130,246,.4)}
+.step-row.done  .step-num{background:var(--green);color:#fff}
+.step-body{flex:1}
+.step-lbl{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:5px}
+.step-row.active .step-lbl{color:var(--blue)}
+.step-inp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* 分数入力グループ */
+.fi-group{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
+.fi-line{width:100%;height:2px;background:#cbd5e1;border-radius:2px}
+.s-inp{
+  width:50px;height:40px;border:2px solid #e2e8f0;border-radius:10px;
+  text-align:center;font-size:1.15rem;font-weight:800;font-family:var(--font);
+  outline:none;transition:all .2s;background:var(--bg);-moz-appearance:textfield
+}
+.s-inp::-webkit-inner-spin-button{display:none}
+.s-inp:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.s-inp.ok{border-color:var(--green);background:#f0fdf4;animation:popIn .3s}
+.s-inp.ng{border-color:var(--red);background:#fef2f2;animation:shake .3s}
+.s-inp.int{width:66px}
+.s-inp.frozen{background:#f8fafc;color:var(--muted);pointer-events:none}
+@keyframes popIn{0%{transform:scale(.9)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.s-op{font-size:1.1rem;font-weight:700;color:var(--muted);padding:0 2px}
+.chk-btn{
+  background:var(--blue);color:#fff;border:none;border-radius:10px;
+  padding:8px 16px;font-size:.85rem;font-weight:800;cursor:pointer;font-family:var(--font);
+  transition:all .2s;box-shadow:0 2px 8px rgba(59,130,246,.3);margin-top:2px
+}
+.chk-btn:hover{background:var(--blue-d);transform:translateY(-1px)}
+.s-fb{
+  font-size:.76rem;font-weight:700;margin-top:5px;border-radius:6px;
+  padding:3px 8px;display:inline-block;min-height:20px
+}
+.s-fb.ok{background:#dcfce7;color:var(--green-d)}
+.s-fb.ng{background:#fee2e2;color:var(--red-d)}
+.s-fb.hint{background:#fef9c3;color:#92400e}
+
+/* ─ 答えエリア ─ */
+.ans-area{
+  background:var(--card);border-radius:var(--r);padding:16px 18px;
+  box-shadow:var(--sh);flex-shrink:0
+}
+.ans-ttl{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px}
+.ans-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ans-fb{
+  font-size:.88rem;font-weight:700;padding:7px 12px;border-radius:10px;
+  margin-top:8px;min-height:34px;display:flex;align-items:center
+}
+.ans-fb.ok{background:#dcfce7;color:var(--green-d)}
+.ans-fb.ng{background:#fee2e2;color:var(--red-d)}
+.ans-fb.hint{background:#fef9c3;color:#92400e}
+.ans-fb.empty{background:transparent}
+
+/* ─ 次へ ─ */
+.next-btn{
+  width:100%;background:linear-gradient(135deg,var(--green),#16a34a);
+  color:#fff;border:none;border-radius:var(--r);padding:15px;
+  font-size:1.15rem;font-weight:800;cursor:pointer;font-family:var(--font);
+  transition:all .2s;box-shadow:0 4px 15px rgba(34,197,94,.35);
+  display:none;letter-spacing:1px;flex-shrink:0
+}
+.next-btn:hover{transform:translateY(-2px)}
+.next-btn.on{display:block;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ─ ランク（左下） ─ */
+.rank-panel{
+  background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:var(--r);
+  padding:10px 14px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;flex-shrink:0
+}
+.rank-char{font-size:1.9rem;line-height:1}
+.rank-info{flex:1}
+.rank-name{font-size:.8rem;font-weight:800;color:var(--blue-d)}
+.rank-xp-bar{height:7px;background:#e2e8f0;border-radius:4px;margin-top:4px;overflow:hidden}
+.rank-xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:4px;transition:width .5s}
+.rank-xp-txt{font-size:.68rem;color:var(--muted);margin-top:2px}
+
+/* ─ 履歴（左下） ─ */
+.hist-panel{
+  background:var(--card);border-radius:var(--r);padding:10px 12px;
+  box-shadow:var(--sh);max-height:110px;overflow-y:auto;flex-shrink:0
+}
+.hist-ttl{font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase}
+.hist-item{display:flex;align-items:center;gap:5px;font-size:.76rem;margin-bottom:3px;padding:2px 4px;border-radius:5px}
+.hist-item.ok{background:#f0fdf4} .hist-item.ng{background:#fef2f2}
+.hist-q{flex:1;font-weight:600} .hist-pt{font-weight:800;color:var(--blue)}
+
+/* ══════════════════════════════════════════
+   右ペイン：キャンバス
+══════════════════════════════════════════ */
+.cv-panel{
+  flex:1;min-height:0;
+  background:var(--card);border-radius:var(--r);box-shadow:var(--sh);
+  display:flex;flex-direction:column;overflow:hidden
+}
+.cv-toolbar{
+  display:flex;align-items:center;gap:7px;padding:9px 12px;
+  border-bottom:2px solid #f1f5f9;background:#fafbff;flex-shrink:0;flex-wrap:wrap
+}
+.cv-lbl{font-size:.78rem;font-weight:700;color:var(--muted);flex:1;white-space:nowrap}
+/* 描画ON/OFFトグル */
+.draw-toggle{
+  display:flex;align-items:center;gap:5px;
+  background:#f1f5f9;border:2px solid #e2e8f0;border-radius:10px;
+  padding:4px 10px;cursor:pointer;font-size:.78rem;font-weight:800;
+  transition:all .15s;white-space:nowrap;font-family:var(--font)
+}
+.draw-toggle.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.c-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
+.c-dot.on{border-color:#334155;transform:scale(1.25)}
+.tool-btn{
+  width:32px;height:32px;border-radius:8px;border:2px solid #e2e8f0;background:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;transition:all .15s;line-height:1
+}
+.tool-btn:hover{background:var(--sky);border-color:var(--blue)}
+.tool-btn.on{background:var(--blue);border-color:var(--blue)}
+.sz-sl{width:58px;accent-color:var(--blue)}
+#main-canvas{
+  flex:1;display:block;
+  background:repeating-linear-gradient(0deg,transparent,transparent 27px,#e8f0fe 28px),
+             repeating-linear-gradient(90deg,transparent,transparent 27px,#e8f0fe 28px);
+  background-color:#fefeff;
+  touch-action:none;
+  /* デフォルトは描画ON */
+  cursor:crosshair
+}
+#main-canvas.draw-off{cursor:default;pointer-events:none}
+
+/* ══════════════════════════════════════════
+   リザルト
+══════════════════════════════════════════ */
+#screen-result{justify-content:center;gap:18px;text-align:center;max-width:480px;margin:0 auto;width:100%}
+.res-char{font-size:5rem;animation:bounce .6s ease}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.res-title{
+  font-size:2rem;font-weight:900;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+}
+.res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%}
+.stat-card{background:var(--card);border-radius:var(--r);padding:16px 10px;box-shadow:var(--sh)}
+.stat-val{font-size:1.8rem;font-weight:900;color:var(--blue)}
+.stat-lbl{font-size:.75rem;font-weight:700;color:var(--muted);margin-top:3px}
+.stars-big{font-size:2.5rem;letter-spacing:6px}
+.res-btns{display:flex;gap:12px;width:100%}
+.res-btn{
+  flex:1;padding:14px;border:none;border-radius:var(--r);
+  font-size:1rem;font-weight:800;cursor:pointer;font-family:var(--font);transition:all .2s
+}
+.res-btn.retry{background:var(--blue);color:#fff;box-shadow:0 3px 12px rgba(59,130,246,.3)}
+.res-btn.menu{background:var(--card);color:var(--text);border:2px solid #e2e8f0}
+.res-btn:hover{transform:translateY(-2px)}
+
+/* ── FX ── */
+.fx-ov{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:999}
+.fx-p{position:absolute;font-size:1.5rem;animation:fxFly .8s ease-out forwards}
+@keyframes fxFly{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.2);opacity:0}}
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--card);border-radius:50px;padding:12px 24px;
+  font-size:1rem;font-weight:800;box-shadow:0 8px 30px rgba(0,0,0,.15);
+  z-index:1000;display:none;border:3px solid transparent;white-space:nowrap;
+  animation:toastIn .3s
+}
+@keyframes toastIn{from{transform:translateX(-50%) translateY(-20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.toast.on{display:block}
+.toast.combo{border-color:var(--orange);color:var(--orange)}
+.toast.rank{border-color:var(--purple);color:var(--purple)}
+
+/* レスポンシブ */
+@media(max-width:720px){
+  #screen-game{flex-direction:column}
+  .g-left{width:100%}
+  .g-right{padding:0 14px 14px;min-height:50vh}
+}
+</style>
+</head>
+<body>
+
+<div class="fx-ov" id="fx-ov"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ════ タイトル ════ -->
+<div class="screen active" id="screen-title">
+  <div class="title-char">🧮</div>
+  <div>
+    <div class="title-logo">分数マスター</div>
+    <div class="title-sub">かけ算・わり算 冒険ゲーム</div>
+  </div>
+  <div class="mode-cards">
+    <div class="mode-card mul" onclick="selectMode('mul')">
+      <span class="emoji">✕</span>
+      <div style="font-size:1.2rem;color:var(--blue)">かけ算</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-top:4px">分数×分数を<br>マスターしよう</div>
+    </div>
+    <div class="mode-card div" onclick="selectMode('div')">
+      <span class="emoji">÷</span>
+      <div style="font-size:1.2rem;color:var(--purple)">わり算</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-top:4px">分数÷分数を<br>マスターしよう</div>
+    </div>
+  </div>
+  <div style="font-size:.8rem;color:#94a3b8;margin-top:4px">🏆 ハイスコア：<span id="title-hi">0</span>点</div>
+</div>
+
+<!-- ════ レベル選択 ════ -->
+<div class="screen" id="screen-level">
+  <div class="sh-header" style="max-width:560px">
+    <button class="back-btn" onclick="showScreen('title')">← もどる</button>
+    <div class="sh-title" id="lv-title">レベル選択</div>
+  </div>
+  <div class="level-grid" id="level-grid"></div>
+</div>
+
+<!-- ════ ゲーム画面 ════ -->
+<div class="screen" id="screen-game">
+
+  <!-- 左：HUD・問題・ステップ・答え -->
+  <div class="g-left">
+
+    <!-- HUD -->
+    <div class="hud">
+      <button class="back-btn" onclick="confirmBack()">←</button>
+      <div class="hud-item">⭐ <span class="hud-val" id="hud-score">0</span></div>
+      <span class="hud-sep">|</span>
+      <div class="hud-item">🔥 <span class="hud-val" id="hud-streak">0</span></div>
+      <div class="combo-badge" id="combo-badge">×3🔥</div>
+    </div>
+
+    <!-- プログレス -->
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <span class="prog-text" id="prog-text">1 / 10</span>
+    </div>
+
+    <!-- 問題カード -->
+    <div class="q-card">
+      <div class="q-lbl" id="q-lbl">問題 1</div>
+      <div class="q-prob" id="q-prob"></div>
+    </div>
+
+    <!-- ステップパネル -->
+    <div class="steps-panel" id="steps-panel">
+      <div class="steps-ttl">🪜 ステップで解こう</div>
+    </div>
+
+    <!-- 答えエリア -->
+    <div class="ans-area">
+      <div class="ans-ttl" id="ans-ttl">✍️ 答えを入力しよう</div>
+      <div class="ans-row" id="ans-row"></div>
+      <div class="ans-fb empty" id="ans-fb"></div>
+    </div>
+
+    <!-- 次へ -->
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">つぎの問題へ ▶</button>
+
+    <!-- ランク -->
+    <div class="rank-panel">
+      <div class="rank-char" id="rank-char">🌱</div>
+      <div class="rank-info">
+        <div class="rank-name" id="rank-name">見習い計算士</div>
+        <div class="rank-xp-bar"><div class="rank-xp-fill" id="rank-xp-fill" style="width:0%"></div></div>
+        <div class="rank-xp-txt" id="rank-xp-txt">XP: 0 / 50</div>
+      </div>
+    </div>
+
+    <!-- 履歴 -->
+    <div class="hist-panel">
+      <div class="hist-ttl">📋 問題履歴</div>
+      <div id="hist-list"></div>
+    </div>
+
+  </div><!-- /g-left -->
+
+  <!-- 右：キャンバス（大） -->
+  <div class="g-right">
+    <div class="cv-panel">
+      <div class="cv-toolbar">
+        <span class="cv-lbl">✏️ 手書きで計算しよう</span>
+        <!-- 描画トグル -->
+        <button class="draw-toggle on" id="draw-toggle" onclick="toggleDraw()">✏️ 書く</button>
+        <!-- 色 -->
+        <div class="c-dot on"  style="background:#1e293b" onclick="setColor('#1e293b',this)"></div>
+        <div class="c-dot"     style="background:#ef4444" onclick="setColor('#ef4444',this)"></div>
+        <div class="c-dot"     style="background:#3b82f6" onclick="setColor('#3b82f6',this)"></div>
+        <div class="c-dot"     style="background:#22c55e" onclick="setColor('#22c55e',this)"></div>
+        <div class="c-dot"     style="background:#f97316" onclick="setColor('#f97316',this)"></div>
+        <!-- ツール -->
+        <button class="tool-btn on" id="pen-btn"    onclick="setTool('pen')"    title="ペン">✏️</button>
+        <button class="tool-btn"    id="eraser-btn" onclick="setTool('eraser')" title="消しゴム">🧹</button>
+        <input type="range" class="sz-sl" id="sz-sl" min="2" max="24" value="4">
+        <button class="tool-btn" onclick="clearCanvas()" title="全消去">🗑️</button>
+      </div>
+      <canvas id="main-canvas"></canvas>
+    </div>
+  </div><!-- /g-right -->
+
+</div><!-- /screen-game -->
+
+<!-- ════ リザルト ════ -->
+<div class="screen" id="screen-result">
+  <div class="res-char" id="res-char">🎉</div>
+  <div class="res-title">ステージクリア！</div>
+  <div class="stars-big" id="res-stars">⭐⭐⭐</div>
+  <div class="res-stats">
+    <div class="stat-card"><div class="stat-val" id="res-score">0</div><div class="stat-lbl">スコア</div></div>
+    <div class="stat-card"><div class="stat-val" id="res-corr">0</div><div class="stat-lbl">正解数</div></div>
+    <div class="stat-card"><div class="stat-val" id="res-combo">0</div><div class="stat-lbl">最大コンボ</div></div>
+  </div>
+  <div style="background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh);width:100%;font-size:.85rem;color:var(--muted)" id="res-rank"></div>
+  <div class="res-btns">
+    <button class="res-btn retry" onclick="retryLevel()">🔁 もう一度</button>
+    <button class="res-btn menu"  onclick="showScreen('level')">📋 レベル選択</button>
+  </div>
+  <button class="res-btn menu" style="width:100%;background:var(--blue);color:#fff" onclick="showScreen('title')">🏠 タイトルへ</button>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   定数
+══════════════════════════════════════════ */
+const QPL = 10;
+const RANKS = [
+  {name:'見習い計算士',char:'🌱',need:0},
+  {name:'分数の旅人',  char:'🚶',need:50},
+  {name:'計算の使い手',char:'⚔️',need:150},
+  {name:'約分マスター',char:'🔮',need:300},
+  {name:'分数の達人',  char:'🌟',need:500},
+  {name:'超計算王',    char:'👑',need:800},
+];
+const LVC = ['#3b82f6','#22c55e','#f97316','#a855f7','#fbbf24'];
+const COMBO_R = [0,0,0,0.2,0.3,0.5];
+
+/* ══════════════════════════════════════════
+   状態
+══════════════════════════════════════════ */
+let G = {};
+let savedXP   = +localStorage.getItem('fm_xp')   || 0;
+let savedHi   = +localStorage.getItem('fm_hi')   || 0;
+let savedRank = +localStorage.getItem('fm_rank') || 0;
+let lvStars   = JSON.parse(localStorage.getItem('fm_stars') || '{}');
+
+/* ══════════════════════════════════════════
+   数学ユーティリティ
+══════════════════════════════════════════ */
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a}
+function reduce(n,d){const g=gcd(Math.abs(n),Math.abs(d));return{n:n/g,d:d/g}}
+function isReduced(n,d){return gcd(Math.abs(n),Math.abs(d))===1}
+function ri(lo,hi){return Math.floor(Math.random()*(hi-lo+1))+lo}
+function randProper(mx=8){const d=ri(2,mx),n=ri(1,d-1);return{n,d}}
+
+/* ══════════════════════════════════════════
+   HTML ヘルパー
+══════════════════════════════════════════ */
+function fH(n,d){
+  if(d===1) return `<span style="font-size:.95em;font-weight:900">${n}</span>`;
+  return `<span class="q-frac"><span class="fn">${n}</span><span class="fl"></span><span class="fd">${d}</span></span>`;
+}
+function opH(op){return `<span class="q-op">${op}</span>`}
+function mixH(i,n,d){return `<span style="font-size:.7em;font-weight:900;vertical-align:middle">${i}と</span>${fH(n,d)}`}
+
+/* ══════════════════════════════════════════
+   問題生成
+══════════════════════════════════════════ */
+const DEC_TBL=[
+  {v:.5,n:1,d:2},{v:.25,n:1,d:4},{v:.75,n:3,d:4},
+  {v:.2,n:1,d:5},{v:.4,n:2,d:5},{v:.8,n:4,d:5},
+  {v:1.5,n:3,d:2},{v:2.5,n:5,d:2}
+];
+
+function genQ(mode,level){
+  const pools={1:['fi'],2:['ff','ff','ff'],3:['fm'],4:['fd'],5:['fi','ff','ff','fm','fd']};
+  const t=(pools[level]||pools[1])[ri(0,(pools[level]||pools[1]).length-1)];
+  const M=mode==='mul';
+  if(t==='fi') return mkFI(M);
+  if(t==='ff') return mkFF(M);
+  if(t==='fm') return mkFM(M);
+  if(t==='fd') return mkFD(M);
+  return mkFF(M);
+}
+
+function mkFI(M){
+  const a=randProper(6), b=ri(2,9);
+  const r=M ? reduce(a.n*b,a.d) : reduce(a.n,a.d*b);
+  const op=M?'×':'÷';
+  return {
+    display:`${a.n}/${a.d} ${op} ${b}`,
+    html:fH(a.n,a.d)+opH(op)+`<span style="font-size:.95em;font-weight:900">${b}</span>`,
+    ansN:r.n, ansD:r.d, a, b:{n:b,d:1}, mode:M?'mul':'div'
+  };
+}
+function mkFF(M){
+  let a,b;
+  for(let t=0;t<30;t++){
+    a=randProper(8); b=randProper(8);
+    if(M){if(gcd(a.n,b.d)>1||gcd(b.n,a.d)>1)break}
+    else{if(gcd(a.n,b.n)>1||gcd(a.d,b.d)>1)break}
+  }
+  const r=M?reduce(a.n*b.n,a.d*b.d):reduce(a.n*b.d,a.d*b.n);
+  const op=M?'×':'÷';
+  return{
+    display:`${a.n}/${a.d} ${op} ${b.n}/${b.d}`,
+    html:fH(a.n,a.d)+opH(op)+fH(b.n,b.d),
+    ansN:r.n,ansD:r.d,a,b,mode:M?'mul':'div'
+  };
+}
+function mkFM(M){
+  const a=randProper(6),bi=ri(1,3),bf=randProper(6);
+  const bN=bi*bf.d+bf.n, bD=bf.d;
+  const r=M?reduce(a.n*bN,a.d*bD):reduce(a.n*bD,a.d*bN);
+  const op=M?'×':'÷';
+  return{
+    display:`${a.n}/${a.d} ${op} ${bi}と${bf.n}/${bf.d}`,
+    html:fH(a.n,a.d)+opH(op)+mixH(bi,bf.n,bf.d),
+    ansN:r.n,ansD:r.d,a,b:{n:bN,d:bD},bMixed:{i:bi,n:bf.n,d:bf.d},mode:M?'mul':'div'
+  };
+}
+function mkFD(M){
+  const a=randProper(6), drow=DEC_TBL[ri(0,DEC_TBL.length-1)];
+  const{v,n:bn,d:bd}=drow;
+  const r=M?reduce(a.n*bn,a.d*bd):reduce(a.n*bd,a.d*bn);
+  const op=M?'×':'÷';
+  return{
+    display:`${a.n}/${a.d} ${op} ${v}`,
+    html:fH(a.n,a.d)+opH(op)+`<span style="font-size:.95em;font-weight:900">${v}</span>`,
+    ansN:r.n,ansD:r.d,a,b:{n:bn,d:bd},decVal:v,mode:M?'mul':'div'
+  };
+}
+
+/* ══════════════════════════════════════════
+   画面遷移
+══════════════════════════════════════════ */
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='title') document.getElementById('title-hi').textContent=savedHi;
+}
+function selectMode(mode){
+  G.mode=mode;
+  document.getElementById('lv-title').textContent=mode==='mul'?'✕ かけ算：レベル選択':'÷ わり算：レベル選択';
+  buildLevelGrid();
+  showScreen('level');
+}
+function buildLevelGrid(){
+  const grid=document.getElementById('level-grid');
+  const defs=[
+    {name:'分数×整数',   ex:G.mode==='mul'?'2/3 × 4':'2/3 ÷ 4',          c:LVC[0]},
+    {name:'分数×分数',   ex:G.mode==='mul'?'2/3 × 5/6':'2/3 ÷ 5/6',      c:LVC[1]},
+    {name:'分数×帯分数', ex:G.mode==='mul'?'2/3 × 1と1/2':'2/3 ÷ 1と1/2',c:LVC[2]},
+    {name:'分数×小数',   ex:G.mode==='mul'?'2/3 × 0.5':'2/3 ÷ 0.5',      c:LVC[3]},
+    {name:'ミックス！',  ex:'全パターン',                                   c:LVC[4],mix:true},
+  ];
+  grid.innerHTML='';
+  defs.forEach((d,i)=>{
+    const lv=i+1,s=lvStars[`${G.mode}_${lv}`]||0;
+    const el=document.createElement('div');
+    el.className='lv-card'+(d.mix?' mix':'');
+    el.style.setProperty('--lc',d.c);
+    el.innerHTML=`
+      <span class="lv-num">レベル ${lv}</span>
+      <div class="lv-name">${d.name}</div>
+      <div class="lv-ex">例：${d.ex}</div>
+      <div class="stars-row">${[1,2,3].map(n=>`<span class="star${s>=n?' on':''}">${s>=n?'⭐':'☆'}</span>`).join('')}</div>`;
+    el.onclick=()=>startLevel(lv);
+    grid.appendChild(el);
+  });
+}
+
+/* ══════════════════════════════════════════
+   ゲーム開始
+══════════════════════════════════════════ */
+function startLevel(level){
+  G={mode:G.mode,level,qIdx:0,score:0,streak:0,maxStreak:0,correctCount:0,xp:savedXP,rankIdx:savedRank,currentQ:null};
+  document.getElementById('hist-list').innerHTML='';
+  updateRankDisplay();
+  showScreen('game');
+  resizeCanvas();
+  clearCanvas();
+  loadQuestion();
+}
+
+/* ══════════════════════════════════════════
+   問題ロード
+══════════════════════════════════════════ */
+function loadQuestion(){
+  const q=G.currentQ=genQ(G.mode,G.level);
+  q.isInt=(q.ansD===1);
+
+  document.getElementById('q-lbl').textContent=`問 ${G.qIdx+1}　${G.mode==='mul'?'かけ算':'わり算'} Lv.${G.level}`;
+  document.getElementById('q-prob').innerHTML=q.html;
+
+  buildSteps(q);
+  buildAnsForm(q);
+
+  document.getElementById('ans-fb').className='ans-fb empty';
+  document.getElementById('ans-fb').textContent='';
+  document.getElementById('next-btn').classList.remove('on');
+
+  updateProgress();
+  updateHUD();
+}
+
+/* ══════════════════════════════════════════
+   ステップ構築
+   整数は「整数変換ステップ」をスキップ
+   ÷ の場合は「逆数ステップ」を入れる
+══════════════════════════════════════════ */
+function buildSteps(q){
+  const panel=document.getElementById('steps-panel');
+  panel.innerHTML='<div class="steps-ttl">🪜 ステップで解こう</div>';
+
+  // ステップ定義を組み立て
+  const steps=[];
+  const M=q.mode==='mul';
+  const a=q.a, b=q.b;
+
+  // ÷の場合：逆数ステップ
+  if(!M){
+    // 整数の場合は逆数の分母=1の入力なので除外しない（整数÷整数の逆数も出す）
+    steps.push({
+      id:'inv',
+      label:`÷${b.d===1?b.n:b.n+'/'+b.d} の逆数を書こう`,
+      // 答えは b を逆さに
+      expN:b.d, expD:b.n===1?1:b.n, // 整数bの場合 b={n:整数,d:1} → 逆数は 1/b.n
+      // ただし b.d===1(整数)のとき expN=1,expD=b.n
+      type:'inv'
+    });
+    // 整数の逆数調整
+    if(b.d===1){ steps[steps.length-1].expN=1; steps[steps.length-1].expD=b.n; }
+    // 帯分数の場合はすでに仮分数になってる（genFMで変換済み）
+  }
+
+  // 帯分数・小数の場合：変換ステップ（×÷共通）
+  if(q.bMixed){
+    steps.unshift({id:'mix2imp',label:`${q.bMixed.i}と${q.bMixed.n}/${q.bMixed.d} を仮分数に直そう`,expN:b.n,expD:b.d,type:'conv'});
+  }
+  if(q.decVal!==undefined){
+    steps.unshift({id:'dec2frac',label:`${q.decVal} を分数に直そう`,expN:b.n,expD:b.d,type:'conv'});
+  }
+
+  // かけ算の形にするステップ
+  // ÷のときは逆数を使う
+  const mulB = M ? b : {n:b.d===1?1:b.d, d:b.d===1?b.n:b.n};
+  steps.push({
+    id:'setup',
+    label: M?'かけ算の形に書こう':'かけ算に直した形を書こう',
+    expAN:a.n, expAD:a.d, expBN:mulB.n, expBD:mulB.d,
+    type:'setup'
+  });
+
+  // 約分ステップ
+  const rawN=a.n*mulB.n, rawD=a.d*mulB.d;
+  const hasYaku = !isReduced(rawN,rawD) || gcd(a.n,mulB.d)>1 || gcd(mulB.n,a.d)>1;
+  const r=reduce(rawN,rawD);
+  steps.push({
+    id:'yaku',
+    label:'約分しよう（できない場合はそのまま）',
+    rawN,rawD, expN:r.n, expD:r.d, hasYaku,
+    type:'yaku'
+  });
+
+  // DOM生成
+  steps.forEach((s,i)=>{
+    const row=document.createElement('div');
+    row.className='step-row'+(i===0?' active':'');
+    row.id='sr-'+s.id;
+    row.innerHTML=`
+      <div class="step-num" id="sn-${s.id}">${i+1}</div>
+      <div class="step-body">
+        <div class="step-lbl">${s.label}</div>
+        <div class="step-inp-row" id="si-${s.id}">${buildStepInputs(s)}</div>
+        <div class="s-fb" id="sf-${s.id}"></div>
+      </div>`;
+    panel.appendChild(row);
+  });
+
+  G.steps=steps;
+  G.stepIdx=0;
+  focusFirst(steps[0].id);
+}
+
+function buildStepInputs(s){
+  if(s.type==='inv'||s.type==='conv'){
+    return `${fiPair(s.id+'N',s.id+'D')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
+  }
+  if(s.type==='setup'){
+    return `${fiPair(s.id+'AN',s.id+'AD')} <span class="s-op">×</span> ${fiPair(s.id+'BN',s.id+'BD')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
+  }
+  if(s.type==='yaku'){
+    if(!s.hasYaku){
+      return `<span style="font-size:.82rem;background:#f0fdf4;color:var(--green-d);padding:4px 10px;border-radius:8px;font-weight:700">約分なし！そのまま計算してOK ✓</span>
+              <button class="chk-btn" onclick="autoYaku('${s.id}')" style="background:var(--green)">次へ ▶</button>`;
+    }
+    return `<span style="font-size:.8rem;color:var(--muted)">約分後：</span>${fiPair(s.id+'N',s.id+'D')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
+  }
+  return '';
+}
+
+function fiPair(nId,dId){
+  return `<span class="fi-group">
+    <input type="text" inputmode="numeric" class="s-inp" id="${nId}" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${nId}','${dId}')">
+    <span class="fi-line"></span>
+    <input type="text" inputmode="numeric" class="s-inp" id="${dId}" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${dId}',null)">
+  </span>`;
+}
+
+function handleKey(e,thisId,nextId){
+  if(e.key==='Enter'){
+    if(nextId){e.preventDefault();document.getElementById(nextId)?.focus();}
+    else{
+      // 現在のstepIDを探してcheckStep
+      const s=G.steps[G.stepIdx];
+      if(s) checkStep(s.id);
+    }
+  }
+}
+
+function focusFirst(sid){
+  setTimeout(()=>{
+    const row=document.getElementById('sr-'+sid);
+    row?.querySelector('.s-inp')?.focus();
+  },80);
+}
+
+/* ══════════════════════════════════════════
+   ステップ確認ロジック
+══════════════════════════════════════════ */
+function getInt(id){
+  const v=parseInt((document.getElementById(id)||{}).value||'');
+  return isNaN(v)?null:v;
+}
+
+function checkStep(sid){
+  const s=G.steps.find(x=>x.id===sid);
+  if(!s) return;
+  const fb=document.getElementById('sf-'+sid);
+
+  if(s.type==='inv'||s.type==='conv'){
+    const n=getInt(sid+'N'), d=getInt(sid+'D');
+    if(n===null||d===null){setFbS(fb,'ng','両方入力してね！');return;}
+    if(n===s.expN && d===s.expD){
+      passStep(sid,'✓ できた！');
+    } else if(s.type==='inv'){
+      markNG(sid+'N'); markNG(sid+'D');
+      setFbS(fb,'ng','分子と分母をひっくり返そう！');
+    } else {
+      markNG(sid+'N'); markNG(sid+'D');
+      setFbS(fb,'ng',`ヒント：${s.expN}/${s.expD} だよ`);
+    }
+    return;
+  }
+
+  if(s.type==='setup'){
+    const an=getInt(sid+'AN'),ad=getInt(sid+'AD'),bn=getInt(sid+'BN'),bd=getInt(sid+'BD');
+    if([an,ad,bn,bd].some(x=>x===null)){setFbS(fb,'ng','4つ全部入力してね！');return;}
+    const aOK=an===s.expAN && ad===s.expAD;
+    const bOK=bn===s.expBN && bd===s.expBD;
+    if(aOK && bOK){
+      passStep(sid,'✓ 正しい！');
+    } else {
+      if(!aOK){markNG(sid+'AN');markNG(sid+'AD');}
+      if(!bOK){markNG(sid+'BN');markNG(sid+'BD');}
+      setFbS(fb,'ng',aOK?'かけるほうを確認しよう':'かけられるほうから確認しよう');
+    }
+    return;
+  }
+
+  if(s.type==='yaku'){
+    if(!s.hasYaku){autoYaku(sid);return;}
+    const n=getInt(sid+'N'), d=getInt(sid+'D');
+    if(n===null||d===null){setFbS(fb,'ng','両方入力してね！');return;}
+    if(n===s.expN && d===s.expD){
+      passStep(sid,'✓ 約分できた！');
+    } else if(!isReduced(n,d)){
+      markNG(sid+'N');markNG(sid+'D');
+      setFbS(fb,'hint','まだ約分できるよ！');
+    } else {
+      markNG(sid+'N');markNG(sid+'D');
+      setFbS(fb,'ng',`${s.rawN}/${s.rawD} を約分しよう（GCD=${gcd(s.rawN,s.rawD)}）`);
+    }
+    return;
+  }
+}
+
+function autoYaku(sid){
+  passStep(sid,'✓ そのまま計算してOK！');
+}
+
+function passStep(sid,msg){
+  const fb=document.getElementById('sf-'+sid);
+  setFbS(fb,'ok',msg);
+  freezeStep(sid);
+
+  // 次のステップへ
+  const idx=G.steps.findIndex(x=>x.id===sid);
+  const prevRow=document.getElementById('sr-'+sid);
+  prevRow?.classList.replace('active','done');
+  const sn=document.getElementById('sn-'+sid);
+  if(sn) sn.textContent='✓';
+
+  const next=G.steps[idx+1];
+  if(next){
+    G.stepIdx=idx+1;
+    const nRow=document.getElementById('sr-'+next.id);
+    nRow?.classList.add('active');
+    nRow?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    focusFirst(next.id);
+  } else {
+    // 全ステップ完了 → 答え入力フォーカス
+    G.stepIdx=G.steps.length;
+    setTimeout(()=>document.querySelector('#ans-row .s-inp')?.focus(),100);
+    document.getElementById('ans-ttl').textContent='🎯 答えを入力しよう！';
+  }
+}
+
+function freezeStep(sid){
+  const row=document.getElementById('sr-'+sid);
+  if(!row) return;
+  row.querySelectorAll('.s-inp').forEach(el=>{el.readOnly=true;el.classList.add('frozen');});
+  row.querySelectorAll('.chk-btn').forEach(el=>el.style.display='none');
+}
+
+function setFbS(el,cls,msg){el.className='s-fb '+cls;el.textContent=msg;}
+function markNG(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.add('ng');
+  setTimeout(()=>el.classList.remove('ng'),500);
+}
+
+/* ══════════════════════════════════════════
+   答えフォーム
+══════════════════════════════════════════ */
+function buildAnsForm(q){
+  const row=document.getElementById('ans-row');
+  const ttl=document.getElementById('ans-ttl');
+  if(q.isInt){
+    ttl.textContent='✍️ 答えを入力しよう（整数で！）';
+    row.innerHTML=`
+      <input type="text" inputmode="numeric" class="s-inp int" id="ans-int" placeholder="?" maxlength="4"
+        onkeydown="if(event.key==='Enter')submitAns()">
+      <button class="chk-btn" onclick="submitAns()">決定 ✓</button>`;
+  } else {
+    ttl.textContent='✍️ 答えを入力しよう（分数で！）';
+    row.innerHTML=`
+      <span class="fi-group">
+        <input type="text" inputmode="numeric" class="s-inp" id="ans-n" placeholder="?" maxlength="3"
+          onkeydown="if(event.key==='Enter'||event.key==='\t'){event.preventDefault();document.getElementById('ans-d').focus()}">
+        <span class="fi-line"></span>
+        <input type="text" inputmode="numeric" class="s-inp" id="ans-d" placeholder="?" maxlength="3"
+          onkeydown="if(event.key==='Enter')submitAns()">
+      </span>
+      <button class="chk-btn" onclick="submitAns()">決定 ✓</button>`;
+  }
+}
+
+function submitAns(){
+  const q=G.currentQ;
+  const fb=document.getElementById('ans-fb');
+
+  if(q.isInt){
+    const v=parseInt((document.getElementById('ans-int')||{}).value||'');
+    if(isNaN(v)){setFbA(fb,'hint','数字を入力してね！');return;}
+    // 整数答えなので分数で入れたら受け付けない
+    if(v===q.ansN){ correct(); }
+    else { wrong('ちがうよ。キャンバスで確かめてみよう！'); }
+  } else {
+    const n=parseInt((document.getElementById('ans-n')||{}).value||'');
+    const d=parseInt((document.getElementById('ans-d')||{}).value||'');
+    if(isNaN(n)||isNaN(d)){setFbA(fb,'hint','分子と分母を入れてね！');return;}
+    if(d===0){setFbA(fb,'hint','分母は0にできないよ！');return;}
+    // 答えが整数なのに分数で入れた場合
+    if(d===1 && q.ansD!==1){setFbA(fb,'hint','分数のまま入力してね（約分して）');markNGAns();return;}
+    if(n===q.ansN && d===q.ansD){ correct(); }
+    else if(!isReduced(n,d)){
+      setFbA(fb,'hint','まだ約分できるよ！もう一度！');markNGAns();
+    } else {
+      wrong('ちがうよ。キャンバスで計算を見直してみよう！');
+    }
+  }
+}
+
+function markNGAns(){
+  ['ans-int','ans-n','ans-d'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.classList.add('ng');setTimeout(()=>el.classList.remove('ng'),500);}
+  });
+}
+
+function correct(){
+  G.streak++;
+  G.maxStreak=Math.max(G.maxStreak,G.streak);
+  G.correctCount++;
+  const c=Math.min(G.streak,5);
+  const pts=Math.round(100*(1+COMBO_R[c]));
+  G.score+=pts;
+  addXP(pts);
+  updateHUD();
+  addHist(true,pts);
+  spawnFX('✨');
+  if(G.streak>=3){showToast(`🔥 ${G.streak}連続！`,'combo');if(navigator.vibrate)navigator.vibrate([50,30,50]);}
+  ['ans-int','ans-n','ans-d'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.add('ok');
+  });
+  setFbA(document.getElementById('ans-fb'),'ok',G.streak>=3?`🎉 正解！+${pts}点（コンボ！）`:`🎉 正解！+${pts}点`);
+  document.getElementById('next-btn').classList.add('on');
+}
+
+function wrong(msg){
+  G.streak=0;
+  updateHUD();
+  addHist(false,0);
+  if(navigator.vibrate)navigator.vibrate(80);
+  markNGAns();
+  setFbA(document.getElementById('ans-fb'),'ng','❌ '+msg);
+  document.getElementById('next-btn').classList.add('on');
+}
+
+function setFbA(el,cls,msg){el.className='ans-fb '+cls;el.textContent=msg;}
+
+/* ══════════════════════════════════════════
+   XP・ランク
+══════════════════════════════════════════ */
+function addXP(pts){
+  G.xp+=Math.round(pts/2); savedXP=G.xp;
+  localStorage.setItem('fm_xp',savedXP);
+  for(let i=RANKS.length-1;i>=0;i--){
+    if(G.xp>=RANKS[i].need){
+      if(i>G.rankIdx){
+        G.rankIdx=i;savedRank=i;
+        localStorage.setItem('fm_rank',savedRank);
+        showToast(`🎉 ランクアップ！「${RANKS[i].name}」`,'rank');
+        spawnFX('👑');
+      }
+      break;
+    }
+  }
+  updateRankDisplay();
+}
+function updateRankDisplay(){
+  const r=RANKS[G.rankIdx]||RANKS[0],nx=RANKS[Math.min(G.rankIdx+1,RANKS.length-1)];
+  document.getElementById('rank-char').textContent=r.char;
+  document.getElementById('rank-name').textContent=r.name;
+  const pct=G.rankIdx>=RANKS.length-1?100:Math.round((G.xp-r.need)/(nx.need-r.need)*100);
+  document.getElementById('rank-xp-fill').style.width=Math.max(0,Math.min(100,pct))+'%';
+  document.getElementById('rank-xp-txt').textContent=`XP: ${G.xp} / ${nx.need}`;
+}
+function updateHUD(){
+  document.getElementById('hud-score').textContent=G.score;
+  document.getElementById('hud-streak').textContent=G.streak;
+  const b=document.getElementById('combo-badge');
+  if(G.streak>=3){b.textContent=`×${G.streak}🔥`;b.classList.add('on');}
+  else b.classList.remove('on');
+}
+function updateProgress(){
+  document.getElementById('prog-fill').style.width=(G.qIdx/QPL*100)+'%';
+  document.getElementById('prog-text').textContent=`${G.qIdx+1} / ${QPL}`;
+}
+function addHist(ok,pts){
+  const q=G.currentQ, list=document.getElementById('hist-list');
+  const el=document.createElement('div');
+  el.className='hist-item '+(ok?'ok':'ng');
+  el.innerHTML=`<span>${ok?'✅':'❌'}</span><span class="hist-q">${q.display}</span><span class="hist-pt">${ok?'+'+pts:''}</span>`;
+  list.prepend(el);
+}
+function showToast(msg,cls){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast on '+(cls||'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200);
+}
+function spawnFX(e){
+  const ov=document.getElementById('fx-ov'),em=[e,'⭐','✨','🌟'];
+  for(let i=0;i<8;i++){
+    const p=document.createElement('div');
+    p.className='fx-p';p.textContent=em[~~(Math.random()*em.length)];
+    p.style.left=Math.random()*window.innerWidth+'px';
+    p.style.top=(Math.random()*window.innerHeight*.5+window.innerHeight*.2)+'px';
+    p.style.setProperty('--dx',(Math.random()-.5)*200+'px');
+    p.style.setProperty('--dy',-(Math.random()*150+50)+'px');
+    p.style.animationDelay=(Math.random()*.3)+'s';
+    ov.appendChild(p);setTimeout(()=>p.remove(),1200);
+  }
+}
+
+/* ══════════════════════════════════════════
+   次へ・リザルト
+══════════════════════════════════════════ */
+function nextQuestion(){
+  G.qIdx++;
+  if(G.qIdx>=QPL) showResult();
+  else loadQuestion();
+}
+function confirmBack(){if(confirm('タイトルに戻りますか？'))showScreen('title');}
+function showResult(){
+  const pct=G.correctCount/QPL, stars=pct>=.9?3:pct>=.6?2:1;
+  const key=`${G.mode}_${G.level}`;
+  if(!lvStars[key]||lvStars[key]<stars){lvStars[key]=stars;localStorage.setItem('fm_stars',JSON.stringify(lvStars));}
+  if(G.score>savedHi){savedHi=G.score;localStorage.setItem('fm_hi',savedHi);}
+  document.getElementById('res-char').textContent=stars===3?'👑':stars===2?'🌟':'😊';
+  document.getElementById('res-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('res-score').textContent=G.score;
+  document.getElementById('res-corr').textContent=`${G.correctCount}/${QPL}`;
+  document.getElementById('res-combo').textContent=G.maxStreak;
+  const r=RANKS[G.rankIdx]||RANKS[0];
+  document.getElementById('res-rank').textContent=`ランク：${r.char} ${r.name}　XP：${G.xp}`;
+  spawnFX('🎊');showScreen('result');
+}
+function retryLevel(){startLevel(G.level);}
+
+/* ══════════════════════════════════════════
+   キャンバス
+══════════════════════════════════════════ */
+let cv,cx;
+const cs={drawing:false,tool:'pen',color:'#1e293b',drawMode:true};
+
+function resizeCanvas(){
+  cv=document.getElementById('main-canvas');
+  cx=cv.getContext('2d');
+  const panel=cv.parentElement;
+  const tb=panel.querySelector('.cv-toolbar');
+  cv.width=panel.clientWidth;
+  cv.height=panel.clientHeight-tb.offsetHeight;
+}
+function clearCanvas(){
+  if(!cx){cv=document.getElementById('main-canvas');cx=cv.getContext('2d');}
+  cx.clearRect(0,0,cv.width,cv.height);
+}
+function toggleDraw(){
+  cs.drawMode=!cs.drawMode;
+  const cv=document.getElementById('main-canvas');
+  const btn=document.getElementById('draw-toggle');
+  if(cs.drawMode){
+    cv.classList.remove('draw-off');
+    btn.textContent='✏️ 書く';btn.classList.add('on');
+  } else {
+    cv.classList.add('draw-off');
+    btn.textContent='👆 入力';btn.classList.remove('on');
+  }
+}
+function setTool(t){
+  cs.tool=t;
+  document.getElementById('pen-btn').classList.toggle('on',t==='pen');
+  document.getElementById('eraser-btn').classList.toggle('on',t==='eraser');
+}
+function setColor(c,dot){
+  cs.color=c;
+  document.querySelectorAll('.c-dot').forEach(d=>d.classList.remove('on'));
+  dot.classList.add('on');
+  setTool('pen');
+}
+function cvPos(e){
+  const rect=cv.getBoundingClientRect(), src=e.touches?e.touches[0]:e;
+  return{x:src.clientX-rect.left,y:src.clientY-rect.top};
+}
+
+(function(){
+  const el=document.getElementById('main-canvas');
+  el.addEventListener('pointerdown',e=>{
+    cs.drawing=true;
+    const{x,y}=cvPos(e);cs.lx=x;cs.ly=y;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!cs.drawing)return;
+    if(!cx){cv=el;cx=el.getContext('2d');}
+    const{x,y}=cvPos(e);
+    const sz=+document.getElementById('sz-sl').value;
+    cx.beginPath();cx.moveTo(cs.lx,cs.ly);cx.lineTo(x,y);
+    cx.strokeStyle=cs.tool==='eraser'?'#fefeff':cs.color;
+    cx.lineWidth=cs.tool==='eraser'?sz*5:sz;
+    cx.lineCap=cx.lineJoin='round';cx.stroke();
+    cs.lx=x;cs.ly=y;
+  });
+  el.addEventListener('pointerup',()=>{cs.drawing=false;});
+  el.addEventListener('pointercancel',()=>{cs.drawing=false;});
+})();
+
+window.addEventListener('resize',()=>{
+  if(document.getElementById('screen-game').classList.contains('active'))resizeCanvas();
+});
+document.getElementById('title-hi').textContent=savedHi;
+</script>
+</body>
+</html>
