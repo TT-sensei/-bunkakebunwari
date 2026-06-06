@@ -161,6 +161,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* 分数入力グループ */
 .fi-group{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
 .fi-line{width:100%;height:2px;background:#cbd5e1;border-radius:2px}
+.setup-frac{
+  display:inline-flex;flex-direction:column;align-items:center;gap:5px;
+  background:#f8fbff;border:2px dashed #bfdbfe;border-radius:14px;
+  padding:10px 12px;vertical-align:middle
+}
+.setup-row{display:flex;align-items:center;gap:6px}
+.setup-line{width:100%;height:3px;background:var(--text);border-radius:2px}
+.setup-frac .s-op{font-size:1.15rem;color:var(--text)}
 .s-inp{
   width:50px;height:40px;border:2px solid #e2e8f0;border-radius:10px;
   text-align:center;font-size:1.15rem;font-weight:800;font-family:var(--font);
@@ -772,7 +780,7 @@ function buildStepInputs(s){
     return `${fiPair(s.id+'N',s.id+'D')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
   }
   if(s.type==='setup'){
-    return `${fiPair(s.id+'AN',s.id+'AD')} <span class="s-op">×</span> ${fiPair(s.id+'BN',s.id+'BD')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
+    return `${mulFractionSetup(s.id)}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
   }
   if(s.type==='yaku'){
     if(!s.hasYaku){
@@ -782,6 +790,22 @@ function buildStepInputs(s){
     return buildReductionEquation(s);
   }
   return '';
+}
+
+function mulFractionSetup(sid){
+  return `<span class="setup-frac" aria-label="分子と分母をそれぞれかけ算の式にする">
+    <span class="setup-row setup-top">
+      <input type="text" inputmode="numeric" class="s-inp" id="${sid}AN" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${sid}AN','${sid}BN')">
+      <span class="s-op">×</span>
+      <input type="text" inputmode="numeric" class="s-inp" id="${sid}BN" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${sid}BN','${sid}AD')">
+    </span>
+    <span class="setup-line"></span>
+    <span class="setup-row setup-bottom">
+      <input type="text" inputmode="numeric" class="s-inp" id="${sid}AD" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${sid}AD','${sid}BD')">
+      <span class="s-op">×</span>
+      <input type="text" inputmode="numeric" class="s-inp" id="${sid}BD" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${sid}BD',null)">
+    </span>
+  </span>`;
 }
 
 function fiPair(nId,dId){
