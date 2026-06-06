@@ -189,6 +189,38 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .s-fb.ng{background:#fee2e2;color:var(--red-d)}
 .s-fb.hint{background:#fef9c3;color:#92400e}
 
+/* 計算式の中で約分するインタラクティブUI */
+.reduce-eq{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  background:#f8fbff;border:2px dashed #bfdbfe;border-radius:14px;
+  padding:10px 12px;margin-top:2px
+}
+.reduce-note{width:100%;font-size:.72rem;font-weight:700;color:var(--muted)}
+.reduce-frac{display:inline-flex;flex-direction:column;align-items:center;gap:3px}
+.reduce-line{width:100%;height:3px;background:var(--text);border-radius:2px}
+.reduce-stack{display:flex;flex-direction:column;align-items:center;position:relative;min-width:46px}
+.reduce-val{
+  cursor:pointer;position:relative;padding:3px 10px;border-radius:8px;
+  font-size:1.15rem;font-weight:900;transition:all .18s;line-height:1.15
+}
+.reduce-val:hover{background:#e2e8f0;transform:translateY(-1px)}
+.reduce-val.crossed{color:#cbd5e1}
+.reduce-val.crossed::after{
+  content:'';position:absolute;left:3px;right:3px;top:50%;height:4px;
+  background:var(--red);transform:rotate(-20deg);border-radius:2px
+}
+.reduce-mini{
+  display:none;width:42px;text-align:center;font-size:1.05rem;font-weight:900;
+  border:3px solid var(--blue);border-radius:8px;color:var(--blue);
+  padding:1px 2px;outline:none;background:#fff;font-family:var(--font);-moz-appearance:textfield
+}
+.reduce-mini::-webkit-inner-spin-button{display:none}
+.reduce-mini.active{display:block;animation:popIn .3s cubic-bezier(.175,.885,.32,1.275)}
+.reduce-mini.ng{border-color:var(--red);background:#fef2f2;animation:shake .3s}
+.reduce-stack.top .reduce-mini{order:-1;margin-bottom:-3px;z-index:2}
+.reduce-stack.bottom .reduce-mini{order:1;margin-top:-3px;z-index:2}
+.reduce-op{font-size:1.25rem;font-weight:900;color:var(--muted)}
+
 /* ─ 答えエリア ─ */
 .ans-area{
   background:var(--card);border-radius:var(--r);padding:16px 18px;
@@ -709,8 +741,9 @@ function buildSteps(q){
   const r=reduce(rawN,rawD);
   steps.push({
     id:'yaku',
-    label:'約分しよう（できない場合はそのまま）',
+    label:'計算式の中で約分しよう（できない場合はそのまま）',
     rawN,rawD, expN:r.n, expD:r.d, hasYaku,
+    parts:{n1:a.n,d1:a.d,n2:mulB.n,d2:mulB.d},
     type:'yaku'
   });
 
@@ -746,7 +779,7 @@ function buildStepInputs(s){
       return `<span style="font-size:.82rem;background:#f0fdf4;color:var(--green-d);padding:4px 10px;border-radius:8px;font-weight:700">約分なし！そのまま計算してOK ✓</span>
               <button class="chk-btn" onclick="autoYaku('${s.id}')" style="background:var(--green)">次へ ▶</button>`;
     }
-    return `<span style="font-size:.8rem;color:var(--muted)">約分後：</span>${fiPair(s.id+'N',s.id+'D')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
+    return buildReductionEquation(s);
   }
   return '';
 }
@@ -757,6 +790,47 @@ function fiPair(nId,dId){
     <span class="fi-line"></span>
     <input type="text" inputmode="numeric" class="s-inp" id="${dId}" placeholder="?" maxlength="3" onkeydown="handleKey(event,'${dId}',null)">
   </span>`;
+}
+
+function reduceStack(sid,pos,val,place){
+  return `<span class="reduce-stack ${place}">
+    <input type="text" inputmode="numeric" class="reduce-mini" id="${sid}-${pos}" placeholder="?" maxlength="3" onkeydown="handleReductionKey(event,'${sid}')">
+    <span class="reduce-val" id="rv-${sid}-${pos}" onclick="crossReduction('${sid}','${pos}')">${val}</span>
+  </span>`;
+}
+
+function buildReductionEquation(s){
+  const p=s.parts;
+  return `<div class="reduce-eq">
+    <div class="reduce-note">タップした数に斜線を引いて、約分後の小さい数を入れよう。</div>
+    <span class="reduce-frac">
+      ${reduceStack(s.id,'n1',p.n1,'top')}
+      <span class="reduce-line"></span>
+      ${reduceStack(s.id,'d1',p.d1,'bottom')}
+    </span>
+    <span class="reduce-op">×</span>
+    <span class="reduce-frac">
+      ${reduceStack(s.id,'n2',p.n2,'top')}
+      <span class="reduce-line"></span>
+      ${reduceStack(s.id,'d2',p.d2,'bottom')}
+    </span>
+    <button class="chk-btn" onclick="checkStep('${s.id}')">約分をチェック ✓</button>
+  </div>`;
+}
+
+function crossReduction(sid,pos){
+  const val=document.getElementById(`rv-${sid}-${pos}`);
+  const input=document.getElementById(`${sid}-${pos}`);
+  val?.classList.add('crossed');
+  input?.classList.add('active');
+  input?.focus();
+}
+
+function handleReductionKey(e,sid){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    checkStep(sid);
+  }
 }
 
 function handleKey(e,thisId,nextId){
@@ -822,19 +896,63 @@ function checkStep(sid){
 
   if(s.type==='yaku'){
     if(!s.hasYaku){autoYaku(sid);return;}
-    const n=getInt(sid+'N'), d=getInt(sid+'D');
-    if(n===null||d===null){setFbS(fb,'ng','両方入力してね！');return;}
-    if(n===s.expN && d===s.expD){
-      passStep(sid,'✓ 約分できた！');
-    } else if(!isReduced(n,d)){
-      markNG(sid+'N');markNG(sid+'D');
-      setFbS(fb,'hint','まだ約分できるよ！');
+    const cur=getReductionValues(s);
+    if(!cur.ok){
+      setFbS(fb,'ng','斜線を引いたところには、1以上の数を入力してね！');
+      return;
+    }
+
+    const curProductNum=cur.n1*cur.n2;
+    const curProductDen=cur.d1*cur.d2;
+    const isEquivalent=(s.rawN*curProductDen)===(s.rawD*curProductNum);
+    const isFullyReduced=gcd(curProductNum,curProductDen)===1;
+    const changed=['n1','d1','n2','d2'].some(pos=>cur[pos]!==s.parts[pos]);
+
+    if(!isEquivalent){
+      markReductionNG(sid);
+      setFbS(fb,'ng','どこかで計算が変わっているよ。斜線のペアを見直そう！');
+    } else if(!isFullyReduced){
+      markReductionNG(sid);
+      setFbS(fb,'hint','合っているけど、まだ約分できるよ！ほかのペアも探そう。');
+    } else if(!changed){
+      setFbS(fb,'hint','約分できる数があるよ。数字をタップして斜線を引こう！');
     } else {
-      markNG(sid+'N');markNG(sid+'D');
-      setFbS(fb,'ng',`${s.rawN}/${s.rawD} を約分しよう（GCD=${gcd(s.rawN,s.rawD)}）`);
+      passStep(sid,`✓ 約分できた！ ${curProductNum}/${curProductDen}`);
     }
     return;
   }
+}
+
+function getReductionValues(s){
+  const out={ok:true};
+  ['n1','d1','n2','d2'].forEach(pos=>{
+    const input=document.getElementById(`${s.id}-${pos}`);
+    const val=document.getElementById(`rv-${s.id}-${pos}`);
+    const active=input?.classList.contains('active');
+    const parsed=parseInt(input?.value||'');
+    if(active){
+      if(isNaN(parsed)||parsed<1){
+        out.ok=false;
+        input?.classList.add('ng');
+      } else {
+        out[pos]=parsed;
+      }
+    } else {
+      out[pos]=s.parts[pos];
+      val?.classList.remove('crossed');
+    }
+  });
+  return out;
+}
+
+function markReductionNG(sid){
+  ['n1','d1','n2','d2'].forEach(pos=>{
+    const input=document.getElementById(`${sid}-${pos}`);
+    if(input?.classList.contains('active')){
+      input.classList.add('ng');
+      setTimeout(()=>input.classList.remove('ng'),450);
+    }
+  });
 }
 
 function autoYaku(sid){
