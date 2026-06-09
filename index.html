@@ -74,7 +74,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 /* ══════════════════════════════════════════
    ゲーム画面
-   キャンバスをなくし、問題とステップを一画面で見渡せる学習ボード
 ══════════════════════════════════════════ */
 #screen-game{
   padding:14px;align-items:center;
@@ -147,9 +146,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   box-shadow:var(--sh);overflow-y:auto;min-height:0
 }
 .steps-ttl{font-size:.82rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
-.step-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;opacity:.35;transition:opacity .3s}
+.step-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;transition:opacity .3s}
 .step-row.active{opacity:1}
-.step-row.done{opacity:.65}
+.step-row.done{opacity:.7}
+/* 未到達：step-bodyを完全に非表示 */
+.step-row:not(.active):not(.done) .step-body{display:none}
+/* 未到達のロックバッジ */
+.step-lock{
+  flex:1;font-size:.74rem;font-weight:700;color:#94a3b8;
+  background:#f8fafc;border:2px dashed #e2e8f0;border-radius:10px;
+  padding:5px 12px;margin-top:4px;
+}
+/* activeになった瞬間にstep-bodyをアニメ展開 */
+.step-row.active .step-body{
+  display:block;
+  animation:stepOpen .3s ease-out;
+}
+@keyframes stepOpen{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
 .step-num{
   width:30px;height:30px;border-radius:50%;background:#e2e8f0;
   display:flex;align-items:center;justify-content:center;
@@ -183,6 +199,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .s-inp.ng{border-color:var(--red);background:#fef2f2;animation:shake .3s}
 .s-inp.int{width:66px}
 .s-inp.frozen{background:#f8fafc;color:var(--muted);pointer-events:none}
+/* 答えエリアのロック状態 */
+.s-inp:disabled{background:#f1f5f9;color:#94a3b8;cursor:not-allowed;opacity:1;border-color:#e2e8f0}
 @keyframes popIn{0%{transform:scale(.9)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .s-op{font-size:1.1rem;font-weight:700;color:var(--muted);padding:0 2px}
@@ -199,6 +217,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .s-fb.ok{background:#dcfce7;color:var(--green-d)}
 .s-fb.ng{background:#fee2e2;color:var(--red-d)}
 .s-fb.hint{background:#fef9c3;color:#92400e}
+
+/* 10分の○ 専用UI */
+.dec-frac-input{
+  display:inline-flex;flex-direction:column;align-items:center;gap:4px;
+  background:#f8fbff;border:2px dashed #bfdbfe;border-radius:14px;
+  padding:10px 14px;vertical-align:middle
+}
+.dec-frac-top{display:flex;align-items:center;gap:6px}
+.dec-frac-line{width:100%;height:3px;background:var(--text);border-radius:2px}
+.dec-denom-fixed{
+  font-size:1.15rem;font-weight:900;color:var(--text);
+  min-width:28px;text-align:center;padding:0 4px
+}
 
 /* 計算式の中で約分するインタラクティブUI */
 .reduce-eq{
@@ -239,7 +270,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   box-shadow:var(--sh);flex-shrink:0
 }
 .ans-ttl{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px}
+.ans-area.locked .ans-ttl{color:#94a3b8}
 .ans-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ans-lock-msg{
+  font-size:.78rem;font-weight:700;color:#94a3b8;
+  background:#f8fafc;border:2px dashed #e2e8f0;border-radius:10px;
+  padding:7px 12px;width:100%;text-align:center;margin-top:4px;
+  display:none
+}
+.ans-area.locked .ans-lock-msg{display:block}
 .ans-fb{
   font-size:.88rem;font-weight:700;padding:7px 12px;border-radius:10px;
   margin-top:8px;min-height:34px;display:flex;align-items:center
@@ -327,6 +366,99 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .toast.combo{border-color:var(--orange);color:var(--orange)}
 .toast.rank{border-color:var(--purple);color:var(--purple)}
 
+/* ══════════════════════════════════════════
+   タイトル ランクカード
+══════════════════════════════════════════ */
+.title-rank-card{
+  display:flex;align-items:center;gap:14px;
+  background:linear-gradient(135deg,#1e3a5f,#1e4080);
+  border-radius:20px;padding:16px 20px;
+  box-shadow:0 6px 24px rgba(30,58,138,.35);
+  width:100%;max-width:460px;color:#fff;
+  position:relative;overflow:hidden
+}
+.title-rank-card::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:120px;height:120px;
+  background:rgba(255,255,255,.05);border-radius:50%
+}
+.trc-left{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:54px}
+.trc-char{font-size:2.6rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.trc-lv{
+  font-size:.72rem;font-weight:900;letter-spacing:1px;
+  background:rgba(255,255,255,.18);border-radius:20px;padding:2px 8px
+}
+.trc-center{flex:1;min-width:0}
+.trc-name{font-size:1.05rem;font-weight:900;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trc-bar-wrap{background:rgba(255,255,255,.18);border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px}
+.trc-bar{height:100%}
+.trc-fill{height:100%;background:linear-gradient(90deg,#fbbf24,#f97316);border-radius:4px;transition:width .6s cubic-bezier(.25,.46,.45,.94)}
+.trc-xp{font-size:.68rem;color:rgba(255,255,255,.7);font-weight:700}
+.trc-right{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px;opacity:.75}
+.trc-next-lbl{font-size:.55rem;font-weight:900;letter-spacing:1px;color:rgba(255,255,255,.6)}
+.trc-next-char{font-size:1.4rem;line-height:1}
+.trc-next-name{font-size:.6rem;font-weight:700;text-align:center;word-break:keep-all}
+/* MAX表示 */
+.trc-max .trc-right{opacity:1}
+.trc-max .trc-fill{background:linear-gradient(90deg,#a855f7,#ec4899)}
+
+/* ══════════════════════════════════════════
+   ランクアップモーダル
+══════════════════════════════════════════ */
+.rankup-modal{
+  position:fixed;inset:0;z-index:2000;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px)
+}
+.rankup-modal.on{display:flex;animation:fadeIn .25s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.rum-box{
+  background:linear-gradient(145deg,#1e3a5f,#312e81);
+  border-radius:28px;padding:36px 32px 28px;
+  text-align:center;color:#fff;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  position:relative;overflow:hidden;min-width:280px;max-width:360px;width:90%
+}
+.rum-bg-fx{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 30%,rgba(251,191,36,.12) 0%,transparent 70%)
+}
+.rum-char{font-size:4.5rem;margin-bottom:6px;animation:rumBounce .6s cubic-bezier(.36,.07,.19,.97) .1s both;display:block}
+@keyframes rumBounce{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+.rum-badge{
+  display:inline-block;
+  background:linear-gradient(135deg,#fbbf24,#f97316);
+  color:#fff;font-size:.8rem;font-weight:900;letter-spacing:3px;
+  border-radius:20px;padding:4px 16px;margin-bottom:12px
+}
+.rum-lv{font-size:1rem;font-weight:900;color:#fbbf24;margin-bottom:4px;letter-spacing:2px}
+.rum-name{font-size:1.55rem;font-weight:900;margin-bottom:8px;line-height:1.2}
+.rum-msg{font-size:.82rem;color:rgba(255,255,255,.7);margin-bottom:20px}
+.rum-btn{
+  background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;
+  border:none;border-radius:50px;padding:12px 32px;
+  font-size:1rem;font-weight:900;cursor:pointer;font-family:var(--font);
+  box-shadow:0 4px 16px rgba(251,191,36,.4);transition:transform .15s
+}
+.rum-btn:hover{transform:scale(1.05)}
+
+/* リザルト画面のランク表示を強化 */
+.res-rank-card{
+  background:linear-gradient(135deg,#1e3a5f,#1e4080);
+  border-radius:var(--r);padding:14px 18px;
+  box-shadow:var(--sh);width:100%;color:#fff;
+  display:flex;align-items:center;gap:12px
+}
+.rrc-char{font-size:2rem}
+.rrc-info{flex:1}
+.rrc-lv{font-size:.7rem;font-weight:900;color:#fbbf24;letter-spacing:1px}
+.rrc-name{font-size:1rem;font-weight:900}
+.rrc-xp-row{display:flex;align-items:center;gap:6px;margin-top:4px}
+.rrc-bar{flex:1;height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden}
+.rrc-fill{height:100%;background:linear-gradient(90deg,#fbbf24,#f97316);border-radius:3px;transition:width .5s}
+.rrc-xptxt{font-size:.65rem;color:rgba(255,255,255,.7);font-weight:700;white-space:nowrap}
+.rrc-gain{font-size:.78rem;font-weight:900;color:#fbbf24}
+
 /* レスポンシブ */
 @media(max-width:800px){
   #screen-game{padding:10px}
@@ -358,6 +490,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="fx-ov" id="fx-ov"></div>
 <div class="toast" id="toast"></div>
 
+<!-- ランクアップモーダル -->
+<div class="rankup-modal" id="rankup-modal">
+  <div class="rum-box">
+    <div class="rum-bg-fx" id="rum-bg-fx"></div>
+    <div class="rum-char" id="rum-char">👑</div>
+    <div class="rum-badge">RANK UP!</div>
+    <div class="rum-lv" id="rum-lv">Lv.7</div>
+    <div class="rum-name" id="rum-name">計算の剣士</div>
+    <div class="rum-msg" id="rum-msg">新しい称号を獲得！</div>
+    <button class="rum-btn" onclick="closeRankupModal()">やったー！ ✨</button>
+  </div>
+</div>
+
 <!-- ════ タイトル ════ -->
 <div class="screen active" id="screen-title">
   <div class="title-char">🧮</div>
@@ -365,6 +510,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="title-logo">分数マスター</div>
     <div class="title-sub">かけ算・わり算 冒険ゲーム</div>
   </div>
+
+  <!-- ランクカード -->
+  <div class="title-rank-card" id="title-rank-card">
+    <div class="trc-left">
+      <div class="trc-char" id="trc-char">🌱</div>
+      <div class="trc-lv" id="trc-lv">Lv.1</div>
+    </div>
+    <div class="trc-center">
+      <div class="trc-name" id="trc-name">見習い計算士</div>
+      <div class="trc-bar-wrap">
+        <div class="trc-bar"><div class="trc-fill" id="trc-fill" style="width:0%"></div></div>
+      </div>
+      <div class="trc-xp" id="trc-xp">XP: 0 / 80</div>
+    </div>
+    <div class="trc-right">
+      <div class="trc-next-lbl">NEXT</div>
+      <div class="trc-next-char" id="trc-next-char">🥚</div>
+      <div class="trc-next-name" id="trc-next-name">分数のたまご</div>
+    </div>
+  </div>
+
   <div class="mode-cards">
     <div class="mode-card mul" onclick="selectMode('mul')">
       <span class="emoji">✕</span>
@@ -392,7 +558,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- ════ ゲーム画面 ════ -->
 <div class="screen" id="screen-game">
 
-  <!-- 左：HUD・問題・ステップ・答え -->
   <div class="g-left">
 
     <!-- HUD -->
@@ -422,9 +587,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
 
     <!-- 答えエリア -->
-    <div class="ans-area">
+    <div class="ans-area locked" id="ans-area">
       <div class="ans-ttl" id="ans-ttl">✍️ 答えを入力しよう</div>
       <div class="ans-row" id="ans-row"></div>
+      <div class="ans-lock-msg" id="ans-lock-msg">🪜 上のステップを全部終えたら入力できるよ！</div>
       <div class="ans-fb empty" id="ans-fb"></div>
     </div>
 
@@ -475,12 +641,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 ══════════════════════════════════════════ */
 const QPL = 10;
 const RANKS = [
-  {name:'見習い計算士',char:'🌱',need:0},
-  {name:'分数の旅人',  char:'🚶',need:50},
-  {name:'計算の使い手',char:'⚔️',need:150},
-  {name:'約分マスター',char:'🔮',need:300},
-  {name:'分数の達人',  char:'🌟',need:500},
-  {name:'超計算王',    char:'👑',need:800},
+  {lv:1,  name:'見習い計算士',   char:'🌱', need:0},
+  {lv:2,  name:'分数のたまご',   char:'🥚', need:80},
+  {lv:3,  name:'計算の旅人',     char:'🚶', need:200},
+  {lv:4,  name:'数の探検家',     char:'🔭', need:360},
+  {lv:5,  name:'分数使い',       char:'✏️', need:560},
+  {lv:6,  name:'約分の修行者',   char:'⚙️', need:800},
+  {lv:7,  name:'計算の剣士',     char:'⚔️', need:1100},
+  {lv:8,  name:'分数の狩人',     char:'🏹', need:1460},
+  {lv:9,  name:'数式の魔法使い', char:'🔮', need:1880},
+  {lv:10, name:'約分マスター',   char:'💎', need:2360},
+  {lv:11, name:'計算の勇者',     char:'🦸', need:2900},
+  {lv:12, name:'分数の賢者',     char:'📚', need:3500},
+  {lv:13, name:'演算の錬金術師', char:'⚗️', need:4200},
+  {lv:14, name:'数の騎士',       char:'🛡️', need:4980},
+  {lv:15, name:'分数の将軍',     char:'🎖️', need:5840},
+  {lv:16, name:'計算の魔王',     char:'😈', need:6800},
+  {lv:17, name:'分数の達人',     char:'🌟', need:7860},
+  {lv:18, name:'超計算王',       char:'👑', need:9020},
+  {lv:19, name:'数式の神',       char:'🔱', need:10280},
+  {lv:20, name:'分数マスター伝説',char:'🏆', need:11800},
 ];
 const LVC = ['#3b82f6','#22c55e','#f97316','#a855f7','#fbbf24'];
 const COMBO_R = [0,0,0,0.2,0.3,0.5];
@@ -515,11 +695,23 @@ function mixH(i,n,d){return `<span style="font-size:.7em;font-weight:900;vertica
 
 /* ══════════════════════════════════════════
    問題生成
+
+   【修正】DEC_TBL：
+   - rawN を追加（分母10の分子。例：0.5 → rawN:5）
+   - 「分母10で表せないもの」（0.25, 0.75）を除外
+   - 0.6 を追加
+   - mkFD では b = {n:rawN, d:10}（約分前の形）を使用
+     → setupステップで「□/10」をそのまま使う
+     → yakuステップで約分
 ══════════════════════════════════════════ */
 const DEC_TBL=[
-  {v:.5,n:1,d:2},{v:.25,n:1,d:4},{v:.75,n:3,d:4},
-  {v:.2,n:1,d:5},{v:.4,n:2,d:5},{v:.8,n:4,d:5},
-  {v:1.5,n:3,d:2},{v:2.5,n:5,d:2}
+  {v:0.2,  rawN:2,  n:1, d:5},
+  {v:0.4,  rawN:4,  n:2, d:5},
+  {v:0.5,  rawN:5,  n:1, d:2},
+  {v:0.6,  rawN:6,  n:3, d:5},
+  {v:0.8,  rawN:8,  n:4, d:5},
+  {v:1.5,  rawN:15, n:3, d:2},
+  {v:2.5,  rawN:25, n:5, d:2},
 ];
 
 function genQ(mode,level){
@@ -569,15 +761,30 @@ function mkFM(M){
     ansN:r.n,ansD:r.d,a,b:{n:bN,d:bD},bMixed:{i:bi,n:bf.n,d:bf.d},mode:M?'mul':'div'
   };
 }
+
+/* 【修正】mkFD
+   b = {n: rawN, d: 10} で rawN/10 の約分前の形を使う
+   → setupステップで「□/10」をそのまま書かせる
+   → yakuで約分してはじめて reduce済みの答えになる
+   最終答え (ansN/ansD) は rawN/10 から正しく計算
+*/
 function mkFD(M){
-  const a=randProper(6), drow=DEC_TBL[ri(0,DEC_TBL.length-1)];
-  const{v,n:bn,d:bd}=drow;
-  const r=M?reduce(a.n*bn,a.d*bd):reduce(a.n*bd,a.d*bn);
+  const a=randProper(6);
+  const drow=DEC_TBL[ri(0,DEC_TBL.length-1)];
+  const{v, rawN, n:bn, d:bd}=drow;
+  // b は「約分前の形（分母10）」を使う
+  const bRaw={n:rawN, d:10};
+  const r=M?reduce(a.n*rawN, a.d*10):reduce(a.n*10, a.d*rawN);
   const op=M?'×':'÷';
   return{
     display:`${a.n}/${a.d} ${op} ${v}`,
     html:fH(a.n,a.d)+opH(op)+`<span style="font-size:.95em;font-weight:900">${v}</span>`,
-    ansN:r.n,ansD:r.d,a,b:{n:bn,d:bd},decVal:v,mode:M?'mul':'div'
+    ansN:r.n, ansD:r.d,
+    a,
+    b: bRaw,        // ← 約分前の {n:rawN, d:10} を使う
+    decVal:v,
+    decRawN:rawN,   // ← dec2frac ステップで使う
+    mode:M?'mul':'div'
   };
 }
 
@@ -588,7 +795,16 @@ function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   window.scrollTo(0,0);
-  if(name==='title') document.getElementById('title-hi').textContent=savedHi;
+  if(name==='title'){
+    document.getElementById('title-hi').textContent=savedHi;
+// 初期表示
+(function(){
+  const idx=getRankIdx(savedXP);
+  savedRank=idx;
+  updateTitleRank();
+})();
+    updateTitleRank();
+  }
 }
 function selectMode(mode){
   G.mode=mode;
@@ -643,7 +859,7 @@ function loadQuestion(){
   document.getElementById('q-prob').innerHTML=q.html;
 
   buildSteps(q);
-  buildAnsForm(q);
+  buildAnsForm(q);       // ← ロック状態で生成
 
   document.getElementById('ans-fb').className='ans-fb empty';
   document.getElementById('ans-fb').textContent='';
@@ -655,44 +871,48 @@ function loadQuestion(){
 
 /* ══════════════════════════════════════════
    ステップ構築
-   整数は「整数変換ステップ」をスキップ
-   ÷ の場合は「逆数ステップ」を入れる
 ══════════════════════════════════════════ */
 function buildSteps(q){
   const panel=document.getElementById('steps-panel');
   panel.innerHTML='<div class="steps-ttl">🪜 ステップで解こう</div>';
 
-  // ステップ定義を組み立て
   const steps=[];
   const M=q.mode==='mul';
   const a=q.a, b=q.b;
 
   // ÷の場合：逆数ステップ
   if(!M){
-    // 整数の場合は逆数の分母=1の入力なので除外しない（整数÷整数の逆数も出す）
+    let invN, invD;
+    if(b.d===1){ invN=1; invD=b.n; }           // 整数の逆数
+    else        { invN=b.d; invD=b.n; }          // 分数の逆数
     steps.push({
       id:'inv',
-      label:`÷${b.d===1?b.n:b.n+'/'+b.d} の逆数を書こう`,
-      // 答えは b を逆さに
-      expN:b.d, expD:b.n===1?1:b.n, // 整数bの場合 b={n:整数,d:1} → 逆数は 1/b.n
-      // ただし b.d===1(整数)のとき expN=1,expD=b.n
+      label:`÷${b.d===1?b.n:`${b.n}/${b.d}`} の逆数を書こう`,
+      expN:invN, expD:invD,
       type:'inv'
     });
-    // 整数の逆数調整
-    if(b.d===1){ steps[steps.length-1].expN=1; steps[steps.length-1].expD=b.n; }
-    // 帯分数の場合はすでに仮分数になってる（genFMで変換済み）
   }
 
-  // 帯分数・小数の場合：変換ステップ（×÷共通）
+  // 帯分数の場合：変換ステップ
   if(q.bMixed){
     steps.unshift({id:'mix2imp',label:`${q.bMixed.i}と${q.bMixed.n}/${q.bMixed.d} を仮分数に直そう`,expN:b.n,expD:b.d,type:'conv'});
   }
+
+  /* 【修正】小数の場合：dec2frac ステップ
+     type:'dec2frac' として専用UIを使う
+     expN = decRawN（分母10の分子）, expD = 10 固定
+  */
   if(q.decVal!==undefined){
-    steps.unshift({id:'dec2frac',label:`${q.decVal} を分数に直そう`,expN:b.n,expD:b.d,type:'conv'});
+    steps.unshift({
+      id:'dec2frac',
+      label:`${q.decVal} を「10分の○」で表そう`,
+      expN: q.decRawN,
+      expD: 10,
+      type:'dec2frac'
+    });
   }
 
   // かけ算の形にするステップ
-  // ÷のときは逆数を使う
   const mulB = M ? b : {n:b.d===1?1:b.d, d:b.d===1?b.n:b.n};
   steps.push({
     id:'setup',
@@ -720,6 +940,7 @@ function buildSteps(q){
     row.id='sr-'+s.id;
     row.innerHTML=`
       <div class="step-num" id="sn-${s.id}">${i+1}</div>
+      <div class="step-lock" id="sl-${s.id}"${i===0?' style="display:none"':''}>🔒 前のステップをクリアすると見えるよ</div>
       <div class="step-body">
         <div class="step-lbl">${s.label}</div>
         <div class="step-inp-row" id="si-${s.id}">${buildStepInputs(s)}</div>
@@ -734,6 +955,10 @@ function buildSteps(q){
 }
 
 function buildStepInputs(s){
+  // 【修正】dec2frac専用UI
+  if(s.type==='dec2frac'){
+    return `${buildDec2FracInput(s.id)}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
+  }
   if(s.type==='inv'||s.type==='conv'){
     return `${fiPair(s.id+'N',s.id+'D')}<button class="chk-btn" onclick="checkStep('${s.id}')">確認 ✓</button>`;
   }
@@ -748,6 +973,21 @@ function buildStepInputs(s){
     return buildReductionEquation(s);
   }
   return '';
+}
+
+/* 【新関数】小数→10分の○ 専用入力UI
+   分母 "10" は固定テキスト、分子だけ input
+*/
+function buildDec2FracInput(sid){
+  return `<span class="dec-frac-input">
+    <span class="dec-frac-top">
+      <input type="text" inputmode="numeric" class="s-inp" id="${sid}N" placeholder="?" maxlength="3"
+        onkeydown="handleKey(event,'${sid}N',null)"
+        style="width:54px">
+    </span>
+    <span class="dec-frac-line"></span>
+    <span class="dec-denom-fixed">10</span>
+  </span>`;
 }
 
 function mulFractionSetup(sid){
@@ -819,7 +1059,6 @@ function handleKey(e,thisId,nextId){
   if(e.key==='Enter'){
     if(nextId){e.preventDefault();document.getElementById(nextId)?.focus();}
     else{
-      // 現在のstepIDを探してcheckStep
       const s=G.steps[G.stepIdx];
       if(s) checkStep(s.id);
     }
@@ -846,6 +1085,19 @@ function checkStep(sid){
   if(!s) return;
   const fb=document.getElementById('sf-'+sid);
 
+  /* 【修正】dec2frac：分子だけチェック（分母は10固定）*/
+  if(s.type==='dec2frac'){
+    const n=getInt(sid+'N');
+    if(n===null){setFbS(fb,'ng','分子（上の数）を入力してね！');return;}
+    if(n===s.expN){
+      passStep(sid,'✓ できた！');
+    } else {
+      markNG(sid+'N');
+      setFbS(fb,'ng','10分の○の○に入る数を考えてみよう！');
+    }
+    return;
+  }
+
   if(s.type==='inv'||s.type==='conv'){
     const n=getInt(sid+'N'), d=getInt(sid+'D');
     if(n===null||d===null){setFbS(fb,'ng','両方入力してね！');return;}
@@ -856,7 +1108,7 @@ function checkStep(sid){
       setFbS(fb,'ng','分子と分母をひっくり返そう！');
     } else {
       markNG(sid+'N'); markNG(sid+'D');
-      setFbS(fb,'ng',`ヒント：${s.expN}/${s.expD} だよ`);
+      setFbS(fb,'ng','分子と分母をもう一度確認しよう！');
     }
     return;
   }
@@ -899,7 +1151,7 @@ function checkStep(sid){
     } else if(!changed){
       setFbS(fb,'hint','約分できる数があるよ。数字をタップして斜線を引こう！');
     } else {
-      passStep(sid,`✓ 約分できた！ ${curProductNum}/${curProductDen}`);
+      passStep(sid,'✓ 約分できた！');
     }
     return;
   }
@@ -946,7 +1198,6 @@ function passStep(sid,msg){
   setFbS(fb,'ok',msg);
   freezeStep(sid);
 
-  // 次のステップへ
   const idx=G.steps.findIndex(x=>x.id===sid);
   const prevRow=document.getElementById('sr-'+sid);
   prevRow?.classList.replace('active','done');
@@ -958,14 +1209,32 @@ function passStep(sid,msg){
     G.stepIdx=idx+1;
     const nRow=document.getElementById('sr-'+next.id);
     nRow?.classList.add('active');
+    // ロックバッジを隠す
+    const lock=document.getElementById('sl-'+next.id);
+    if(lock) lock.style.display='none';
     nRow?.scrollIntoView({behavior:'smooth',block:'nearest'});
     focusFirst(next.id);
   } else {
-    // 全ステップ完了 → 答え入力フォーカス
+    // 全ステップ完了 → 答えエリアをアンロック
     G.stepIdx=G.steps.length;
-    setTimeout(()=>document.querySelector('#ans-row .s-inp')?.focus(),100);
-    document.getElementById('ans-ttl').textContent='🎯 答えを入力しよう！';
+    unlockAnsForm();
   }
+}
+
+/* 【新関数】答えエリアのアンロック */
+function unlockAnsForm(){
+  const area=document.getElementById('ans-area');
+  area.classList.remove('locked');
+  // disabled 解除
+  area.querySelectorAll('input[disabled]').forEach(el=>el.removeAttribute('disabled'));
+  // チェックボタン表示
+  area.querySelectorAll('.chk-btn').forEach(el=>el.style.display='');
+  // フォーカス
+  setTimeout(()=>{
+    area.scrollIntoView({behavior:'smooth',block:'nearest'});
+    area.querySelector('.s-inp')?.focus();
+  },150);
+  document.getElementById('ans-ttl').textContent='🎯 答えを入力しよう！';
 }
 
 function freezeStep(sid){
@@ -985,27 +1254,38 @@ function markNG(id){
 
 /* ══════════════════════════════════════════
    答えフォーム
+
+   【修正】
+   - 初期状態は input を disabled にしてロック
+   - .chk-btn も display:none にしてロック
+   - unlockAnsForm() で解除される
 ══════════════════════════════════════════ */
 function buildAnsForm(q){
   const row=document.getElementById('ans-row');
   const ttl=document.getElementById('ans-ttl');
+  const area=document.getElementById('ans-area');
+  area.classList.add('locked');
+
   if(q.isInt){
     ttl.textContent='✍️ 答えを入力しよう（整数で！）';
     row.innerHTML=`
       <input type="text" inputmode="numeric" class="s-inp int" id="ans-int" placeholder="?" maxlength="4"
+        disabled
         onkeydown="if(event.key==='Enter')submitAns()">
-      <button class="chk-btn" onclick="submitAns()">決定 ✓</button>`;
+      <button class="chk-btn" onclick="submitAns()" style="display:none">決定 ✓</button>`;
   } else {
     ttl.textContent='✍️ 答えを入力しよう（分数で！）';
     row.innerHTML=`
       <span class="fi-group">
         <input type="text" inputmode="numeric" class="s-inp" id="ans-n" placeholder="?" maxlength="3"
+          disabled
           onkeydown="if(event.key==='Enter'||event.key==='\t'){event.preventDefault();document.getElementById('ans-d').focus()}">
         <span class="fi-line"></span>
         <input type="text" inputmode="numeric" class="s-inp" id="ans-d" placeholder="?" maxlength="3"
+          disabled
           onkeydown="if(event.key==='Enter')submitAns()">
       </span>
-      <button class="chk-btn" onclick="submitAns()">決定 ✓</button>`;
+      <button class="chk-btn" onclick="submitAns()" style="display:none">決定 ✓</button>`;
   }
 }
 
@@ -1016,7 +1296,6 @@ function submitAns(){
   if(q.isInt){
     const v=parseInt((document.getElementById('ans-int')||{}).value||'');
     if(isNaN(v)){setFbA(fb,'hint','数字を入力してね！');return;}
-    // 整数答えなので分数で入れたら受け付けない
     if(v===q.ansN){ correct(); }
     else { wrong('ちがうよ。キャンバスで確かめてみよう！'); }
   } else {
@@ -1024,7 +1303,6 @@ function submitAns(){
     const d=parseInt((document.getElementById('ans-d')||{}).value||'');
     if(isNaN(n)||isNaN(d)){setFbA(fb,'hint','分子と分母を入れてね！');return;}
     if(d===0){setFbA(fb,'hint','分母は0にできないよ！');return;}
-    // 答えが整数なのに分数で入れた場合
     if(d===1 && q.ansD!==1){setFbA(fb,'hint','分数のまま入力してね（約分して）');markNGAns();return;}
     if(n===q.ansN && d===q.ansD){ correct(); }
     else if(!isReduced(n,d)){
@@ -1077,29 +1355,74 @@ function setFbA(el,cls,msg){el.className='ans-fb '+cls;el.textContent=msg;}
 /* ══════════════════════════════════════════
    XP・ランク
 ══════════════════════════════════════════ */
+function getRankIdx(xp){
+  for(let i=RANKS.length-1;i>=0;i--){ if(xp>=RANKS[i].need) return i; }
+  return 0;
+}
 function addXP(pts){
-  G.xp+=Math.round(pts/2); savedXP=G.xp;
+  const prevIdx=getRankIdx(G.xp);
+  G.xp+=pts; savedXP=G.xp;
   localStorage.setItem('fm_xp',savedXP);
-  for(let i=RANKS.length-1;i>=0;i--){
-    if(G.xp>=RANKS[i].need){
-      if(i>G.rankIdx){
-        G.rankIdx=i;savedRank=i;
-        localStorage.setItem('fm_rank',savedRank);
-        showToast(`🎉 ランクアップ！「${RANKS[i].name}」`,'rank');
-        spawnFX('👑');
-      }
-      break;
-    }
+  const newIdx=getRankIdx(G.xp);
+  if(newIdx>prevIdx){
+    G.rankIdx=newIdx; savedRank=newIdx;
+    localStorage.setItem('fm_rank',savedRank);
+    // ランクアップモーダル表示（少し遅延して演出）
+    setTimeout(()=>showRankupModal(RANKS[newIdx]),400);
+    spawnFX('👑');
+  } else {
+    G.rankIdx=newIdx;
   }
   updateRankDisplay();
+  updateTitleRank(); // タイトル画面のランクカードも更新
 }
 function updateRankDisplay(){
-  const r=RANKS[G.rankIdx]||RANKS[0],nx=RANKS[Math.min(G.rankIdx+1,RANKS.length-1)];
+  const r=RANKS[G.rankIdx]||RANKS[0];
+  const isMax=G.rankIdx>=RANKS.length-1;
+  const nx=RANKS[Math.min(G.rankIdx+1,RANKS.length-1)];
   document.getElementById('rank-char').textContent=r.char;
-  document.getElementById('rank-name').textContent=r.name;
-  const pct=G.rankIdx>=RANKS.length-1?100:Math.round((G.xp-r.need)/(nx.need-r.need)*100);
+  document.getElementById('rank-name').textContent=`Lv.${r.lv} ${r.name}`;
+  const pct=isMax?100:Math.round((G.xp-r.need)/(nx.need-r.need)*100);
   document.getElementById('rank-xp-fill').style.width=Math.max(0,Math.min(100,pct))+'%';
-  document.getElementById('rank-xp-txt').textContent=`XP: ${G.xp} / ${nx.need}`;
+  document.getElementById('rank-xp-txt').textContent=isMax
+    ?`👑 MAX到達！ XP: ${G.xp}`
+    :`XP: ${G.xp} / ${nx.need}（次まで${nx.need-G.xp}）`;
+}
+function updateTitleRank(){
+  const idx=getRankIdx(savedXP);
+  const r=RANKS[idx]||RANKS[0];
+  const isMax=idx>=RANKS.length-1;
+  const nx=RANKS[Math.min(idx+1,RANKS.length-1)];
+  const pct=isMax?100:Math.round((savedXP-r.need)/(nx.need-r.need)*100);
+  document.getElementById('trc-char').textContent=r.char;
+  document.getElementById('trc-lv').textContent=`Lv.${r.lv}`;
+  document.getElementById('trc-name').textContent=r.name;
+  document.getElementById('trc-fill').style.width=Math.max(0,Math.min(100,pct))+'%';
+  document.getElementById('trc-xp').textContent=isMax
+    ?`👑 MAX到達！ XP: ${savedXP}`
+    :`XP: ${savedXP} / ${nx.need}（次まで${nx.need-savedXP}）`;
+  if(isMax){
+    document.getElementById('trc-next-char').textContent='🏆';
+    document.getElementById('trc-next-name').textContent='MAX';
+    document.getElementById('title-rank-card').classList.add('trc-max');
+  } else {
+    document.getElementById('trc-next-char').textContent=nx.char;
+    document.getElementById('trc-next-name').textContent=nx.name;
+    document.getElementById('title-rank-card').classList.remove('trc-max');
+  }
+}
+function showRankupModal(rank){
+  document.getElementById('rum-char').textContent=rank.char;
+  document.getElementById('rum-lv').textContent=`Lv.${rank.lv} 達成！`;
+  document.getElementById('rum-name').textContent=rank.name;
+  const msgs=['新しい称号を獲得！','実力が認められた！','さらなる高みへ！','止まらない成長！','伝説に近づいている！'];
+  document.getElementById('rum-msg').textContent=msgs[Math.min(rank.lv-1, msgs.length-1)];
+  document.getElementById('rankup-modal').classList.add('on');
+  // 背景パーティクル
+  spawnFX('🌟');spawnFX('⭐');
+}
+function closeRankupModal(){
+  document.getElementById('rankup-modal').classList.remove('on');
 }
 function updateHUD(){
   document.getElementById('hud-score').textContent=G.score;
@@ -1158,12 +1481,32 @@ function showResult(){
   document.getElementById('res-corr').textContent=`${G.correctCount}/${QPL}`;
   document.getElementById('res-combo').textContent=G.maxStreak;
   const r=RANKS[G.rankIdx]||RANKS[0];
-  document.getElementById('res-rank').textContent=`ランク：${r.char} ${r.name}　XP：${G.xp}`;
+  const isMax=G.rankIdx>=RANKS.length-1;
+  const nx=RANKS[Math.min(G.rankIdx+1,RANKS.length-1)];
+  const rankPct=isMax?100:Math.round((G.xp-r.need)/(nx.need-r.need)*100);
+  document.getElementById('res-rank').innerHTML=`
+    <div class="res-rank-card">
+      <div class="rrc-char">${r.char}</div>
+      <div class="rrc-info">
+        <div class="rrc-lv">Lv.${r.lv}</div>
+        <div class="rrc-name">${r.name}</div>
+        <div class="rrc-xp-row">
+          <div class="rrc-bar"><div class="rrc-fill" style="width:${rankPct}%"></div></div>
+          <div class="rrc-xptxt">${isMax?'MAX':G.xp+' / '+nx.need}</div>
+        </div>
+      </div>
+    </div>`;
   spawnFX('🎊');showScreen('result');
 }
 function retryLevel(){startLevel(G.level);}
 
 document.getElementById('title-hi').textContent=savedHi;
+// 初期表示
+(function(){
+  const idx=getRankIdx(savedXP);
+  savedRank=idx;
+  updateTitleRank();
+})();
 </script>
 </body>
 </html>
