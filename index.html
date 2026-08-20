@@ -595,7 +595,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="title-recent-kicker">RECENT BADGE</div>
       <div class="title-recent-name" id="recent-badge-name">まだバッジはありません</div>
     </div>
-    <button class="badge-open-btn" onclick="showScreen('badges')">バッジ図鑑 ▶</button>
+    <button class="badge-open-btn" onclick="showBadges()">バッジ図鑑 ▶</button>
   </div>
 
   <div class="mode-cards">
@@ -799,7 +799,7 @@ function grantBadge(id){
   if(ownedBadges.includes(id))return false;const b=badgeById(id);if(!b)return false;
   ownedBadges.push(id);recentBadgeId=id;saveBadges();renderRecentBadge();renderBadgeBook();
   document.getElementById('badge-modal-img').src=b.img;document.getElementById('badge-modal-img').alt=b.name;document.getElementById('badge-modal-name').textContent=b.name;document.getElementById('badge-modal-desc').textContent=b.desc+'｜'+b.rarity;document.getElementById('badge-modal').classList.add('on');
-  playRecipe(b.rarity==='COMMON'||b.rarity==='SPECIAL'?'badge':'rareBadge');spawnFX('🎁');spawnFX('✨');return true;
+  window.playRecipe?.(b.rarity==='COMMON'||b.rarity==='SPECIAL'?'badge':'rareBadge');spawnFX('🎁');spawnFX('✨');return true;
 }
 function closeBadgeModal(){document.getElementById('badge-modal').classList.remove('on')}
 function checkBadgeUnlock(event){
@@ -943,12 +943,12 @@ function showScreen(name){
     updateTitleRank();
   }
 }
-function showBadges(){renderBadgeBook();showScreen('badges');playRecipe('bookOpen')}
+function showBadges(){renderBadgeBook();showScreen('badges');window.playRecipe?.('bookOpen')}
 function selectMode(mode){
   G.mode=mode;
   document.getElementById('lv-title').textContent=mode==='mul'?'✕ かけ算：レベル選択':'÷ わり算：レベル選択';
   buildLevelGrid();
-  showScreen('level');playRecipe('start');
+  showScreen('level');window.playRecipe?.('start');
 }
 function buildLevelGrid(){
   const grid=document.getElementById('level-grid');
@@ -983,7 +983,7 @@ function startLevel(level){
   document.getElementById('hist-list').innerHTML='';
   updateRankDisplay();
   showScreen('game');
-  playRecipe('questionStart');
+  window.playRecipe?.('questionStart');
   loadQuestion();
 }
 
@@ -1468,7 +1468,7 @@ function correct(){
   G.score+=pts;
   addXP(pts);
   checkBadgeUnlock('correct');
-  playRecipe('correct');
+  window.playRecipe?.('correct');
   updateHUD();
   addHist(true,pts);
   spawnFX('✨');
@@ -1488,7 +1488,7 @@ function wrong(msg){
   if(navigator.vibrate)navigator.vibrate(80);
   markNGAns();
   setFbA(document.getElementById('ans-fb'),'ng','❌ '+msg);
-  playRecipe('wrong');
+  window.playRecipe?.('wrong');
   document.getElementById('next-btn').classList.add('on');
 }
 
@@ -1618,7 +1618,7 @@ function showResult(){
   if(!lvStars[key]||lvStars[key]<stars){lvStars[key]=stars;localStorage.setItem('fm_stars',JSON.stringify(lvStars));}
   if(G.score>savedHi){savedHi=G.score;localStorage.setItem('fm_hi',savedHi);}
   grantLevelBadge(G.level);
-  playRecipe(stars===3?'stageClear':'clear');
+  window.playRecipe?.(stars===3?'stageClear':'clear');
   document.getElementById('res-char').textContent=stars===3?'👑':stars===2?'🌟':'😊';
   document.getElementById('res-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
   document.getElementById('res-score').textContent=G.score;
