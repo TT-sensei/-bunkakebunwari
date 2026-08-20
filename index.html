@@ -767,17 +767,35 @@ let lvStars   = JSON.parse(localStorage.getItem('fm_stars') || '{}');
 const ASSET='https://tt-sensei.github.io/edu-assets/assets/';
 const BADGES=[
   {id:'animal-bear',cat:'コレクション｜どうぶつ',name:'くま',rarity:'COMMON',img:ASSET+'collections/animal/common/bear/badge.png',desc:'はじめて正解した記念'},
+  {id:'animal-cat',cat:'コレクション｜どうぶつ',name:'ねこ',rarity:'COMMON',img:ASSET+'collections/animal/common/cat/badge.png',desc:'2問正解した記念'},
   {id:'animal-fox',cat:'コレクション｜どうぶつ',name:'きつね',rarity:'COMMON',img:ASSET+'collections/animal/common/fox/badge.png',desc:'3問正解した記念'},
-  {id:'fruit-apple',cat:'コレクション｜フルーツ',name:'りんご',rarity:'COMMON',img:ASSET+'collections/fruit/common/apple/badge.png',desc:'5問正解した記念'},
+  {id:'animal-hamster',cat:'コレクション｜どうぶつ',name:'ハムスター',rarity:'COMMON',img:ASSET+'collections/animal/common/hamster/badge.png',desc:'4問正解した記念'},
+  {id:'animal-panda',cat:'コレクション｜どうぶつ',name:'パンダ',rarity:'COMMON',img:ASSET+'collections/animal/common/panda/badge.png',desc:'5問正解した記念'},
+  {id:'animal-penguin',cat:'コレクション｜どうぶつ',name:'ペンギン',rarity:'COMMON',img:ASSET+'collections/animal/common/penguin/badge.png',desc:'6問正解した記念'},
+  {id:'animal-rabbit',cat:'コレクション｜どうぶつ',name:'うさぎ',rarity:'COMMON',img:ASSET+'collections/animal/common/rabbit/badge.png',desc:'7問正解した記念'},
+  {id:'animal-shiba',cat:'コレクション｜どうぶつ',name:'しばいぬ',rarity:'COMMON',img:ASSET+'collections/animal/common/shiba/badge.png',desc:'8問正解した記念'},
+  {id:'fruit-apple',cat:'コレクション｜フルーツ',name:'りんご',rarity:'COMMON',img:ASSET+'collections/fruit/common/apple/badge.png',desc:'9問正解した記念'},
+  {id:'fruit-banana',cat:'コレクション｜フルーツ',name:'バナナ',rarity:'COMMON',img:ASSET+'collections/fruit/common/banana/badge.png',desc:'10問正解した記念'},
+  {id:'fruit-grape',cat:'コレクション｜フルーツ',name:'ぶどう',rarity:'COMMON',img:ASSET+'collections/fruit/common/grape/badge.png',desc:'11問正解した記念'},
+  {id:'fruit-orange',cat:'コレクション｜フルーツ',name:'オレンジ',rarity:'COMMON',img:ASSET+'collections/fruit/common/orange/badge.png',desc:'12問正解した記念'},
+  {id:'fruit-peach',cat:'コレクション｜フルーツ',name:'もも',rarity:'COMMON',img:ASSET+'collections/fruit/common/peach/badge.png',desc:'13問正解した記念'},
+  {id:'fruit-pineapple',cat:'コレクション｜フルーツ',name:'パイナップル',rarity:'COMMON',img:ASSET+'collections/fruit/common/pineapple/badge.png',desc:'14問正解した記念'},
+  {id:'fruit-strawberry',cat:'コレクション｜フルーツ',name:'いちご',rarity:'COMMON',img:ASSET+'collections/fruit/common/strawberry/badge.png',desc:'15問正解した記念'},
+  {id:'fruit-watermelon',cat:'コレクション｜フルーツ',name:'すいか',rarity:'COMMON',img:ASSET+'collections/fruit/common/watermelon/badge.png',desc:'16問正解した記念'},
+  {id:'gem-amethyst',cat:'コレクション｜ほうせき',name:'アメジスト',rarity:'COMMON',img:ASSET+'collections/gem/common/amethyst/badge.png',desc:'17問正解した記念'},
+  {id:'gem-aquamarine',cat:'コレクション｜ほうせき',name:'アクアマリン',rarity:'COMMON',img:ASSET+'collections/gem/common/aquamarine/badge.png',desc:'18問正解した記念'},
+  {id:'gem-citrine',cat:'コレクション｜ほうせき',name:'シトリン',rarity:'COMMON',img:ASSET+'collections/gem/common/citrine/badge.png',desc:'19問正解した記念'},
+  {id:'gem-emerald',cat:'コレクション｜ほうせき',name:'エメラルド',rarity:'COMMON',img:ASSET+'collections/gem/common/emerald/badge.png',desc:'20問正解した記念'},
+  {id:'gem-garnet',cat:'コレクション｜ほうせき',name:'ガーネット',rarity:'COMMON',img:ASSET+'collections/gem/common/garnet/badge.png',desc:'21問正解した記念'},
   {id:'gem-ruby',cat:'コレクション｜ほうせき',name:'ルビー',rarity:'COMMON',img:ASSET+'collections/gem/common/ruby/badge.png',desc:'3連続正解した記念'},
   {id:'element-fire',cat:'エレメント｜FIRE',name:'ファイア',rarity:'LEVEL 1',img:ASSET+'elements/fire/level-1/badge.png',desc:'レベル1をクリアした記念'},
   {id:'element-water',cat:'エレメント｜WATER',name:'ウォーター',rarity:'LEVEL 1',img:ASSET+'elements/water/level-1/badge.png',desc:'レベル2をクリアした記念'},
   {id:'element-nature',cat:'エレメント｜NATURE',name:'ネイチャー',rarity:'LEVEL 1',img:ASSET+'elements/nature/level-1/badge.png',desc:'レベル3をクリアした記念'},
   {id:'element-thunder',cat:'エレメント｜THUNDER',name:'サンダー',rarity:'LEVEL 1',img:ASSET+'elements/thunder/level-1/badge.png',desc:'レベル4をクリアした記念'},
   {id:'element-light',cat:'エレメント｜LIGHT',name:'ライト',rarity:'LEVEL 1',img:ASSET+'elements/light/level-1/badge.png',desc:'レベル5をクリアした記念'},
-  {id:'study-streak',cat:'学び方',name:'コンボスタート',rarity:'SPECIAL',img:ASSET+'badges/common/streak/badge.png',desc:'3連続正解した記念'},
-  {id:'study-master',cat:'学び方',name:'分数マスターへの道',rarity:'SPECIAL',img:ASSET+'badges/common/achievement/badge.png',desc:'10問正解した記念'},
-  {id:'study-clear',cat:'学び方',name:'ステージクリア',rarity:'SPECIAL',img:ASSET+'badges/common/complete/badge.png',desc:'ステージをクリアした記念'}
+  {id:'study-streak',cat:'学習・算数',name:'コンボスタート',rarity:'SPECIAL',img:ASSET+'badges/common/streak/badge.png',desc:'3連続正解した記念'},
+  {id:'study-master',cat:'学習・算数',name:'分数センス',rarity:'SPECIAL',img:ASSET+'badges/math/fraction-sense/badge.png',desc:'10問正解した記念'},
+  {id:'study-clear',cat:'学習・算数',name:'約分マスター',rarity:'SPECIAL',img:ASSET+'badges/math/simplify/badge.png',desc:'ステージをクリアした記念'}
 ];
 let ownedBadges=JSON.parse(localStorage.getItem('fm_badges')||'[]');
 let recentBadgeId=localStorage.getItem('fm_recent_badge')||'';
@@ -804,7 +822,16 @@ function grantBadge(id){
 function closeBadgeModal(){document.getElementById('badge-modal').classList.remove('on')}
 function checkBadgeUnlock(event){
   const total=(+localStorage.getItem('fm_total_correct')||0)+(event==='correct'?1:0);localStorage.setItem('fm_total_correct',total);
-  if(event==='correct'){if(total===1)grantBadge('animal-bear');else if(total===3)grantBadge('animal-fox');else if(total===5)grantBadge('fruit-apple');else if(total===10)grantBadge('study-master');}
+  if(event==='correct'){
+    const milestones={
+      1:'animal-bear',2:'animal-cat',3:'animal-fox',4:'animal-hamster',5:'animal-panda',
+      6:'animal-penguin',7:'animal-rabbit',8:'animal-shiba',9:'fruit-apple',10:'fruit-banana',
+      11:'fruit-grape',12:'fruit-orange',13:'fruit-peach',14:'fruit-pineapple',15:'fruit-strawberry',
+      16:'fruit-watermelon',17:'gem-amethyst',18:'gem-aquamarine',19:'gem-citrine',
+      20:'gem-emerald',21:'gem-garnet',22:'study-master'
+    };
+    if(milestones[total])grantBadge(milestones[total]);
+  }
   if(event==='streak3')grantBadge('gem-ruby');
 }
 function grantLevelBadge(level){const ids=['element-fire','element-water','element-nature','element-thunder','element-light'];grantBadge(ids[level-1]||'study-clear')}
