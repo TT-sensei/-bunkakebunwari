@@ -796,7 +796,17 @@ const BADGES=[
   {id:'study-streak',cat:'学習・算数',name:'コンボスタート',rarity:'SPECIAL',img:ASSET+'badges/common/streak/badge.png',desc:'3連続正解した記念'},
   {id:'study-master',cat:'学習・算数',name:'分数センス',rarity:'SPECIAL',img:ASSET+'badges/math/fraction-sense/badge.png',desc:'10問正解した記念'},
   {id:'study-clear',cat:'学習・算数',name:'約分マスター',rarity:'SPECIAL',img:ASSET+'badges/math/simplify/badge.png',desc:'ステージをクリアした記念'}
-];
+
+  {id:'learning-first-step',cat:'学習・算数｜学び方',name:'はじめの一歩',rarity:'SPECIAL',img:ASSET+'badges/common/first-step/badge.png',desc:'最初の一問に挑戦した記念'},
+  {id:'learning-never-give-up',cat:'学習・算数｜学び方',name:'あきらめない',rarity:'SPECIAL',img:ASSET+'badges/common/never-give-up/badge.png',desc:'学習を続けた記念'},
+  {id:'learning-try-again',cat:'学習・算数｜学び方',name:'もう一回チャレンジ',rarity:'SPECIAL',img:ASSET+'badges/common/try-again/badge.png',desc:'もう一度挑戦した記念'},
+  {id:'learning-accuracy',cat:'学習・算数｜学び方',name:'ていねい計算',rarity:'SPECIAL',img:ASSET+'badges/common/accuracy/badge.png',desc:'正確に答え続けた記念'},
+  {id:'learning-review',cat:'学習・算数｜学び方',name:'見直し名人',rarity:'SPECIAL',img:ASSET+'badges/common/review-master/badge.png',desc:'答えを見直す力を伸ばした記念'},
+  {id:'learning-practice',cat:'学習・算数｜学び方',name:'練習マスター',rarity:'SPECIAL',img:ASSET+'badges/common/practice-master/badge.png',desc:'練習を積み重ねた記念'},
+  {id:'learning-thinker',cat:'学習・算数｜学び方',name:'じっくり考える',rarity:'SPECIAL',img:ASSET+'badges/common/deep-thinker/badge.png',desc:'考えて答えを出した記念'},
+  {id:'learning-discovery',cat:'学習・算数｜学び方',name:'発見名人',rarity:'SPECIAL',img:ASSET+'badges/common/discovery/badge.png',desc:'新しい考え方を発見した記念'},
+  {id:'learning-focus',cat:'学習・算数｜学び方',name:'集中チャレンジ',rarity:'SPECIAL',img:ASSET+'badges/common/focus/badge.png',desc:'集中して取り組んだ記念'},
+  {id:'learning-mastery',cat:'学習・算数｜学び方',name:'学びの達人',rarity:'SPECIAL',img:ASSET+'badges/common/mastery/badge.png',desc:'学びを積み上げた記念'},];
 let ownedBadges=JSON.parse(localStorage.getItem('fm_badges')||'[]');
 let recentBadgeId=localStorage.getItem('fm_recent_badge')||'';
 function badgeById(id){return BADGES.find(b=>b.id===id)}
@@ -824,12 +834,15 @@ function checkBadgeUnlock(event){
   const total=(+localStorage.getItem('fm_total_correct')||0)+(event==='correct'?1:0);localStorage.setItem('fm_total_correct',total);
   if(event==='correct'){
     const milestones={
-      1:'animal-bear',2:'animal-cat',3:'animal-fox',4:'animal-hamster',5:'animal-panda',
-      6:'animal-penguin',7:'animal-rabbit',8:'animal-shiba',9:'fruit-apple',10:'fruit-banana',
-      11:'fruit-grape',12:'fruit-orange',13:'fruit-peach',14:'fruit-pineapple',15:'fruit-strawberry',
-      16:'fruit-watermelon',17:'gem-amethyst',18:'gem-aquamarine',19:'gem-citrine',
-      20:'gem-emerald',21:'gem-garnet',22:'study-master'
+      2:'animal-bear',3:'animal-cat',4:'animal-fox',5:'animal-hamster',6:'animal-panda',
+      7:'animal-penguin',8:'animal-rabbit',9:'animal-shiba',10:'fruit-apple',11:'fruit-banana',
+      12:'fruit-grape',13:'fruit-orange',14:'fruit-peach',15:'fruit-pineapple',16:'fruit-strawberry',
+      17:'fruit-watermelon',18:'gem-amethyst',19:'gem-aquamarine',20:'gem-citrine',
+      21:'gem-emerald',22:'gem-garnet',23:'study-master',24:'learning-never-give-up',
+      25:'learning-try-again',26:'learning-accuracy',27:'learning-review',28:'learning-practice',
+      29:'learning-thinker',30:'learning-discovery',31:'learning-focus',32:'learning-mastery'
     };
+    if(total===1){grantBadge('learning-first-step');setTimeout(()=>grantBadge('animal-bear'),1300)}
     if(milestones[total])grantBadge(milestones[total]);
   }
   if(event==='streak3')grantBadge('gem-ruby');
