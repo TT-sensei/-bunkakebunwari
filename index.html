@@ -484,6 +484,51 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .rank-panel,.hist-panel{display:none}
 }
 </style>
+
+<link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-effects.css">
+<link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-effects-kinetic.css">
+<style>
+/* 共通素材連携＋コレクションUI */
+#screen-title{position:relative}
+#screen-title .mode-cards{order:1;max-width:620px;gap:18px}
+#screen-title .mode-card{min-height:148px;border-width:4px;transform:scale(1.02);box-shadow:0 10px 28px rgba(59,130,246,.22)}
+#screen-title .mode-card:hover{transform:translateY(-5px) scale(1.04)}
+#screen-title .title-rank-card{order:3}
+.title-recent{order:2;width:100%;max-width:620px;display:flex;align-items:center;gap:14px;padding:10px 14px;background:rgba(255,255,255,.9);border:2px solid #dbeafe;border-radius:18px;box-shadow:var(--sh)}
+.title-recent-copy{flex:1;text-align:left}
+.title-recent-kicker{font-size:.72rem;color:var(--muted);font-weight:800;letter-spacing:.08em}
+.title-recent-name{font-size:1rem;font-weight:900;color:var(--text);margin-top:2px}
+.recent-badge-img{width:62px;height:62px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 5px 8px rgba(30,64,175,.18))}
+.recent-empty{width:62px;height:62px;border-radius:16px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+.badge-open-btn{border:0;border-radius:12px;padding:9px 13px;background:#eef2ff;color:#4338ca;font-weight:900;cursor:pointer;font-family:var(--font);white-space:nowrap}
+.badge-open-btn:hover{background:#e0e7ff;transform:translateY(-1px)}
+.badge-screen{width:100%;max-width:900px;gap:16px}
+.badge-screen-head{display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px}
+.badge-screen-title{font-size:1.5rem;font-weight:900}
+.badge-count{font-size:.82rem;color:var(--muted);font-weight:800}
+.badge-section{width:100%;background:rgba(255,255,255,.8);border-radius:20px;padding:16px;box-shadow:var(--sh)}
+.badge-section h3{font-size:1rem;margin-bottom:10px}
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:12px}
+.badge-card{position:relative;background:#fff;border:2px solid #e2e8f0;border-radius:16px;padding:9px 7px;text-align:center;min-height:136px;transition:.2s}
+.badge-card.owned{border-color:#fbbf24;box-shadow:0 5px 15px rgba(251,191,36,.18)}
+.badge-card.owned:hover{transform:translateY(-3px)}
+.badge-card img{width:78px;height:78px;object-fit:contain;display:block;margin:0 auto 3px}
+.badge-card.locked img{filter:grayscale(1);opacity:.2}
+.badge-card.locked::after{content:'？';position:absolute;top:35px;left:0;right:0;color:#94a3b8;font-weight:900;font-size:1.5rem}
+.badge-card-name{font-size:.72rem;font-weight:900;line-height:1.2}
+.badge-card-meta{font-size:.62rem;color:var(--muted);margin-top:3px}
+.badge-modal{position:fixed;inset:0;z-index:2100;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.65);backdrop-filter:blur(5px)}
+.badge-modal.on{display:flex;animation:fadeIn .2s}
+.badge-modal-box{width:min(390px,90vw);padding:28px 22px 22px;border-radius:28px;text-align:center;color:#fff;background:linear-gradient(145deg,#1e3a8a,#6d28d9);box-shadow:0 25px 80px rgba(0,0,0,.35);position:relative;overflow:hidden}
+.badge-modal-box::before{content:'';position:absolute;width:220px;height:220px;right:-80px;top:-90px;border-radius:50%;background:rgba(255,255,255,.11)}
+.badge-modal-kicker{font-size:.8rem;font-weight:900;letter-spacing:.18em;color:#fde68a}
+.badge-modal-img{width:150px;height:150px;object-fit:contain;margin:8px auto;display:block;filter:drop-shadow(0 8px 12px rgba(0,0,0,.25));animation:badgePop .65s cubic-bezier(.2,.9,.2,1.2)}
+@keyframes badgePop{0%{transform:scale(.2) rotate(-18deg);opacity:0}70%{transform:scale(1.12) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.badge-modal-name{font-size:1.35rem;font-weight:900}
+.badge-modal-desc{font-size:.82rem;color:rgba(255,255,255,.78);margin:5px 0 16px}
+.badge-modal-btn{border:0;border-radius:14px;padding:12px 24px;background:#fbbf24;color:#422006;font-weight:900;font-family:var(--font);cursor:pointer}
+@media(max-width:560px){.title-recent{padding:9px}.recent-badge-img,.recent-empty{width:52px;height:52px}.badge-open-btn{font-size:.72rem;padding:8px}.badge-grid{grid-template-columns:repeat(3,1fr)}.badge-card{min-height:122px}.badge-card img{width:64px;height:64px}}
+</style>
 </head>
 <body>
 
@@ -500,6 +545,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="rum-name" id="rum-name">計算の剣士</div>
     <div class="rum-msg" id="rum-msg">新しい称号を獲得！</div>
     <button class="rum-btn" onclick="closeRankupModal()">やったー！ ✨</button>
+  </div>
+</div>
+
+
+<div class="badge-modal" id="badge-modal">
+  <div class="badge-modal-box">
+    <div class="badge-modal-kicker">NEW BADGE!</div>
+    <img class="badge-modal-img" id="badge-modal-img" alt="">
+    <div class="badge-modal-name" id="badge-modal-name"></div>
+    <div class="badge-modal-desc" id="badge-modal-desc"></div>
+    <button class="badge-modal-btn" onclick="closeBadgeModal()">コレクションに追加！</button>
   </div>
 </div>
 
@@ -531,6 +587,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 
+
+  <!-- 最近ゲットしたバッジ：ホームには1つだけ表示 -->
+  <div class="title-recent" id="title-recent">
+    <div id="recent-badge-slot" class="recent-empty">🎁</div>
+    <div class="title-recent-copy">
+      <div class="title-recent-kicker">RECENT BADGE</div>
+      <div class="title-recent-name" id="recent-badge-name">まだバッジはありません</div>
+    </div>
+    <button class="badge-open-btn" onclick="showScreen('badges')">バッジ図鑑 ▶</button>
+  </div>
+
   <div class="mode-cards">
     <div class="mode-card mul" onclick="selectMode('mul')">
       <span class="emoji">✕</span>
@@ -544,6 +611,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
   <div style="font-size:.8rem;color:#94a3b8;margin-top:4px">🏆 ハイスコア：<span id="title-hi">0</span>点</div>
+</div>
+
+
+<!-- ════ バッジ図鑑 ════ -->
+<div class="screen badge-screen" id="screen-badges">
+  <div class="badge-screen-head">
+    <button class="back-btn" onclick="showScreen('title')">← もどる</button>
+    <div style="text-align:right"><div class="badge-screen-title">バッジ図鑑</div><div class="badge-count" id="badge-count">0 / 0 集めたよ</div></div>
+  </div>
+  <div id="badge-book"></div>
 </div>
 
 <!-- ════ レベル選択 ════ -->
@@ -635,6 +712,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button class="res-btn menu" style="width:100%;background:var(--blue);color:#fff" onclick="showScreen('title')">🏠 タイトルへ</button>
 </div>
 
+
+<script type="module">
+import { soundList } from 'https://tt-sensei.github.io/sounds-recipe-/sounds.js';
+let recipeCtx;
+window.playRecipe = function(id){
+  try{
+    recipeCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+    const r=soundList.find(x=>x.id===id);
+    if(r) r.play(recipeCtx, .9);
+  }catch(e){ /* 音が使えない環境でも学習は続けられる */ }
+};
+</script>
+
 <script>
 /* ══════════════════════════════════════════
    定数
@@ -673,6 +763,52 @@ let savedXP   = +localStorage.getItem('fm_xp')   || 0;
 let savedHi   = +localStorage.getItem('fm_hi')   || 0;
 let savedRank = +localStorage.getItem('fm_rank') || 0;
 let lvStars   = JSON.parse(localStorage.getItem('fm_stars') || '{}');
+/* ═══ コレクション／バッジ ═══ */
+const ASSET='https://tt-sensei.github.io/edu-assets/assets/';
+const BADGES=[
+  {id:'animal-bear',cat:'コレクション｜どうぶつ',name:'くま',rarity:'COMMON',img:ASSET+'collections/animal/common/bear/badge.png',desc:'はじめて正解した記念'},
+  {id:'animal-fox',cat:'コレクション｜どうぶつ',name:'きつね',rarity:'COMMON',img:ASSET+'collections/animal/common/fox/badge.png',desc:'3問正解した記念'},
+  {id:'fruit-apple',cat:'コレクション｜フルーツ',name:'りんご',rarity:'COMMON',img:ASSET+'collections/fruit/common/apple/badge.png',desc:'5問正解した記念'},
+  {id:'gem-ruby',cat:'コレクション｜ほうせき',name:'ルビー',rarity:'COMMON',img:ASSET+'collections/gem/common/ruby/badge.png',desc:'3連続正解した記念'},
+  {id:'element-fire',cat:'エレメント｜FIRE',name:'ファイア',rarity:'LEVEL 1',img:ASSET+'elements/fire/level-1/badge.png',desc:'レベル1をクリアした記念'},
+  {id:'element-water',cat:'エレメント｜WATER',name:'ウォーター',rarity:'LEVEL 1',img:ASSET+'elements/water/level-1/badge.png',desc:'レベル2をクリアした記念'},
+  {id:'element-nature',cat:'エレメント｜NATURE',name:'ネイチャー',rarity:'LEVEL 1',img:ASSET+'elements/nature/level-1/badge.png',desc:'レベル3をクリアした記念'},
+  {id:'element-thunder',cat:'エレメント｜THUNDER',name:'サンダー',rarity:'LEVEL 1',img:ASSET+'elements/thunder/level-1/badge.png',desc:'レベル4をクリアした記念'},
+  {id:'element-light',cat:'エレメント｜LIGHT',name:'ライト',rarity:'LEVEL 1',img:ASSET+'elements/light/level-1/badge.png',desc:'レベル5をクリアした記念'},
+  {id:'study-streak',cat:'学び方',name:'コンボスタート',rarity:'SPECIAL',img:ASSET+'badges/common/streak/badge.png',desc:'3連続正解した記念'},
+  {id:'study-master',cat:'学び方',name:'分数マスターへの道',rarity:'SPECIAL',img:ASSET+'badges/common/achievement/badge.png',desc:'10問正解した記念'},
+  {id:'study-clear',cat:'学び方',name:'ステージクリア',rarity:'SPECIAL',img:ASSET+'badges/common/complete/badge.png',desc:'ステージをクリアした記念'}
+];
+let ownedBadges=JSON.parse(localStorage.getItem('fm_badges')||'[]');
+let recentBadgeId=localStorage.getItem('fm_recent_badge')||'';
+function badgeById(id){return BADGES.find(b=>b.id===id)}
+function saveBadges(){localStorage.setItem('fm_badges',JSON.stringify(ownedBadges));if(recentBadgeId)localStorage.setItem('fm_recent_badge',recentBadgeId)}
+function renderRecentBadge(){
+  const b=badgeById(recentBadgeId),slot=document.getElementById('recent-badge-slot'),name=document.getElementById('recent-badge-name');
+  if(!slot||!name)return;
+  if(!b){slot.className='recent-empty';slot.textContent='🎁';name.textContent='問題に挑戦してバッジを集めよう';return}
+  slot.className='';slot.innerHTML='<img class="recent-badge-img" src="'+b.img+'" alt="'+b.name+'">';name.textContent=b.name+' をゲット！';
+}
+function renderBadgeBook(){
+  const book=document.getElementById('badge-book');if(!book)return;
+  const groups={};BADGES.forEach(b=>(groups[b.cat]??=[]).push(b));book.innerHTML=Object.entries(groups).map(([cat,list])=>
+    '<section class="badge-section"><h3>'+cat+'</h3><div class="badge-grid">'+list.map(b=>{const on=ownedBadges.includes(b.id);return '<article class="badge-card '+(on?'owned':'locked')+'"><img src="'+b.img+'" alt="'+(on?b.name:'未獲得バッジ')+'"><div class="badge-card-name">'+(on?b.name:'？？？')+'</div><div class="badge-card-meta">'+(on?b.rarity:'チャレンジして発見')+'</div></article>'}).join('')+'</div></section>'
+  ).join('');document.getElementById('badge-count').textContent=ownedBadges.length+' / '+BADGES.length+' 集めたよ';
+}
+function grantBadge(id){
+  if(ownedBadges.includes(id))return false;const b=badgeById(id);if(!b)return false;
+  ownedBadges.push(id);recentBadgeId=id;saveBadges();renderRecentBadge();renderBadgeBook();
+  document.getElementById('badge-modal-img').src=b.img;document.getElementById('badge-modal-img').alt=b.name;document.getElementById('badge-modal-name').textContent=b.name;document.getElementById('badge-modal-desc').textContent=b.desc+'｜'+b.rarity;document.getElementById('badge-modal').classList.add('on');
+  playRecipe(b.rarity==='COMMON'||b.rarity==='SPECIAL'?'badge':'rareBadge');spawnFX('🎁');spawnFX('✨');return true;
+}
+function closeBadgeModal(){document.getElementById('badge-modal').classList.remove('on')}
+function checkBadgeUnlock(event){
+  const total=(+localStorage.getItem('fm_total_correct')||0)+(event==='correct'?1:0);localStorage.setItem('fm_total_correct',total);
+  if(event==='correct'){if(total===1)grantBadge('animal-bear');else if(total===3)grantBadge('animal-fox');else if(total===5)grantBadge('fruit-apple');else if(total===10)grantBadge('study-master');}
+  if(event==='streak3')grantBadge('gem-ruby');
+}
+function grantLevelBadge(level){const ids=['element-fire','element-water','element-nature','element-thunder','element-light'];grantBadge(ids[level-1]||'study-clear')}
+
 
 /* ══════════════════════════════════════════
    数学ユーティリティ
@@ -797,6 +933,7 @@ function showScreen(name){
   window.scrollTo(0,0);
   if(name==='title'){
     document.getElementById('title-hi').textContent=savedHi;
+    renderRecentBadge();
 // 初期表示
 (function(){
   const idx=getRankIdx(savedXP);
@@ -806,11 +943,12 @@ function showScreen(name){
     updateTitleRank();
   }
 }
+function showBadges(){renderBadgeBook();showScreen('badges');playRecipe('bookOpen')}
 function selectMode(mode){
   G.mode=mode;
   document.getElementById('lv-title').textContent=mode==='mul'?'✕ かけ算：レベル選択':'÷ わり算：レベル選択';
   buildLevelGrid();
-  showScreen('level');
+  showScreen('level');playRecipe('start');
 }
 function buildLevelGrid(){
   const grid=document.getElementById('level-grid');
@@ -845,6 +983,7 @@ function startLevel(level){
   document.getElementById('hist-list').innerHTML='';
   updateRankDisplay();
   showScreen('game');
+  playRecipe('questionStart');
   loadQuestion();
 }
 
@@ -1328,10 +1467,12 @@ function correct(){
   const pts=Math.round(100*(1+COMBO_R[c]));
   G.score+=pts;
   addXP(pts);
+  checkBadgeUnlock('correct');
+  playRecipe('correct');
   updateHUD();
   addHist(true,pts);
   spawnFX('✨');
-  if(G.streak>=3){showToast(`🔥 ${G.streak}連続！`,'combo');if(navigator.vibrate)navigator.vibrate([50,30,50]);}
+  if(G.streak>=3){checkBadgeUnlock('streak3');showToast(`🔥 ${G.streak}連続！`,'combo');if(navigator.vibrate)navigator.vibrate([50,30,50]);}
   ['ans-int','ans-n','ans-d'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.classList.add('ok');
@@ -1347,6 +1488,7 @@ function wrong(msg){
   if(navigator.vibrate)navigator.vibrate(80);
   markNGAns();
   setFbA(document.getElementById('ans-fb'),'ng','❌ '+msg);
+  playRecipe('wrong');
   document.getElementById('next-btn').classList.add('on');
 }
 
@@ -1475,6 +1617,8 @@ function showResult(){
   const key=`${G.mode}_${G.level}`;
   if(!lvStars[key]||lvStars[key]<stars){lvStars[key]=stars;localStorage.setItem('fm_stars',JSON.stringify(lvStars));}
   if(G.score>savedHi){savedHi=G.score;localStorage.setItem('fm_hi',savedHi);}
+  grantLevelBadge(G.level);
+  playRecipe(stars===3?'stageClear':'clear');
   document.getElementById('res-char').textContent=stars===3?'👑':stars===2?'🌟':'😊';
   document.getElementById('res-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
   document.getElementById('res-score').textContent=G.score;
