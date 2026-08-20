@@ -842,7 +842,7 @@ function checkBadgeUnlock(event){
       25:'learning-try-again',26:'learning-accuracy',27:'learning-review',28:'learning-practice',
       29:'learning-thinker',30:'learning-discovery',31:'learning-focus',32:'learning-mastery'
     };
-    if(total===1){grantBadge('learning-first-step');setTimeout(()=>grantBadge('animal-bear'),1300)}
+    if(total===1)grantBadge('learning-first-step')
     if(milestones[total])grantBadge(milestones[total]);
   }
   if(event==='streak3')grantBadge('gem-ruby');
