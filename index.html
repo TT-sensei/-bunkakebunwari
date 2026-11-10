@@ -315,6 +315,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .rank-xp-txt{font-size:.68rem;color:var(--muted);margin-top:2px}
 
 /* ─ 履歴（左下） ─ */
+.sound-toggle-btn{
+  margin-top:10px;padding:8px 18px;border-radius:999px;border:2px solid #e2e8f0;
+  background:var(--card);color:var(--muted);font-size:.82rem;font-weight:800;cursor:pointer;
+  box-shadow:var(--sh)
+}
+.sound-toggle-btn:hover{border-color:#c7d6ee;color:var(--blue)}
+.steps-panel{align-self:start;max-height:calc(100vh - 28px);overflow-y:auto}
+.hist-panel{align-self:start}
+#hist-list{max-height:172px;overflow-y:auto}
 .hist-panel{
   grid-area:history;
   background:var(--card);border-radius:var(--r);padding:10px 12px;
@@ -494,6 +503,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 #screen-title .mode-card{min-height:148px;border-width:4px;transform:scale(1.02);box-shadow:0 10px 28px rgba(59,130,246,.22)}
 #screen-title .mode-card:hover{transform:translateY(-5px) scale(1.04)}
 #screen-title .title-rank-card{order:3}
+/* タイトル画面を1画面に収める詰め調整 */
+#screen-title{gap:12px}
+#screen-title .title-char{font-size:clamp(2.6rem,7vw,4.2rem)}
+#screen-title .mode-card{min-height:124px}
+#screen-title .title-recent{padding:8px 14px}
+#screen-title .recent-empty{width:52px;height:52px;font-size:1.5rem}
+#screen-title .recent-badge-img{width:52px;height:52px}
+#screen-title .sound-toggle-btn{margin-top:0}
+#screen-title .title-logo{font-size:clamp(2rem,6vw,3rem)}
+#screen-title .mode-card{padding-top:18px;padding-bottom:18px}
+#screen-title .title-rank-card{padding:12px 20px}
 .title-recent{order:2;width:100%;max-width:620px;display:flex;align-items:center;gap:14px;padding:10px 14px;background:rgba(255,255,255,.9);border:2px solid #dbeafe;border-radius:18px;box-shadow:var(--sh)}
 .title-recent-copy{flex:1;text-align:left}
 .title-recent-kicker{font-size:.72rem;color:var(--muted);font-weight:800;letter-spacing:.08em}
@@ -598,6 +618,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="badge-open-btn" onclick="showBadges()">バッジ図鑑 ▶</button>
   </div>
 
+  <!-- とっくん：まちがえた問題の記録 -->
+  <div class="title-recent" id="title-tokken">
+    <div class="recent-empty">🎯</div>
+    <div class="title-recent-copy">
+      <div class="title-recent-kicker">TOKKEN</div>
+      <div class="title-recent-name" id="tokken-label">まちがえた問題はないよ。その調子！</div>
+    </div>
+    <button class="badge-open-btn" id="tokken-btn" onclick="startTokken()">とっくん ▶</button>
+  </div>
+
   <div class="mode-cards">
     <div class="mode-card mul" onclick="selectMode('mul')">
       <span class="emoji">✕</span>
@@ -611,6 +641,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
   <div style="font-size:.8rem;color:#94a3b8;margin-top:4px">🏆 ハイスコア：<span id="title-hi">0</span>点</div>
+  <button class="sound-toggle-btn" id="sound-toggle" onclick="toggleSound()">♪ 音 ON</button>
 </div>
 
 
@@ -697,7 +728,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- ════ リザルト ════ -->
 <div class="screen" id="screen-result">
   <div class="res-char" id="res-char">🎉</div>
-  <div class="res-title">ステージクリア！</div>
+  <div class="res-title" id="res-title">ステージクリア！</div>
   <div class="stars-big" id="res-stars">⭐⭐⭐</div>
   <div class="res-stats">
     <div class="stat-card"><div class="stat-val" id="res-score">0</div><div class="stat-lbl">スコア</div></div>
@@ -718,6 +749,7 @@ import { soundList } from 'https://tt-sensei.github.io/sounds-recipe-/sounds.js'
 let recipeCtx;
 window.playRecipe = function(id){
   try{
+    if(JSON.parse(localStorage.getItem('fm_settings')||'{}').sound === false) return;
     recipeCtx ||= new (window.AudioContext||window.webkitAudioContext)();
     const r=soundList.find(x=>x.id===id);
     if(r) r.play(recipeCtx, .9);
@@ -763,6 +795,9 @@ let savedXP   = +localStorage.getItem('fm_xp')   || 0;
 let savedHi   = +localStorage.getItem('fm_hi')   || 0;
 let savedRank = +localStorage.getItem('fm_rank') || 0;
 let lvStars   = JSON.parse(localStorage.getItem('fm_stars') || '{}');
+let fmMistakes = JSON.parse(localStorage.getItem('fm_mistakes') || '[]');
+let fmSettings = JSON.parse(localStorage.getItem('fm_settings') || '{}');
+if(typeof fmSettings.sound !== 'boolean') fmSettings.sound = true;
 /* ═══ コレクション／バッジ ═══ */
 const ASSET='https://tt-sensei.github.io/edu-assets/assets/';
 const BADGES=[
@@ -1017,8 +1052,44 @@ function buildLevelGrid(){
 /* ══════════════════════════════════════════
    ゲーム開始
 ══════════════════════════════════════════ */
+function mistakeKey(q){ return q.mode + '|' + q.display; }
+function saveMistakes(){ localStorage.setItem('fm_mistakes', JSON.stringify(fmMistakes)); }
+function recordMistake(q){
+  const key = mistakeKey(q);
+  fmMistakes = fmMistakes.filter(m => m.key !== key);
+  fmMistakes.push({ key, mode: G.mode, level: G.level, q: JSON.parse(JSON.stringify(q)) });
+  if(fmMistakes.length > 30) fmMistakes = fmMistakes.slice(-30);
+  saveMistakes(); updateTokkenRow();
+}
+function removeMistake(key){
+  const before = fmMistakes.length;
+  fmMistakes = fmMistakes.filter(m => m.key !== key);
+  if(fmMistakes.length !== before){ saveMistakes(); updateTokkenRow(); }
+}
+function updateTokkenRow(){
+  const label = document.getElementById('tokken-label');
+  const btn = document.getElementById('tokken-btn');
+  if(!label || !btn) return;
+  const n = fmMistakes.length;
+  label.textContent = n ? `まちがえた問題が ${n} 問あるよ` : 'まちがえた問題はないよ。その調子！';
+  btn.disabled = n === 0;
+  btn.style.opacity = n === 0 ? .45 : 1;
+}
+function startTokken(){
+  if(!fmMistakes.length){ showToast('とっくんする問題はまだないよ'); showScreen('title'); return; }
+  const picks = fmMistakes.slice(-10).reverse();
+  const queue = picks.map(m => JSON.parse(JSON.stringify(m.q)));
+  G = { mode: picks[0].mode, level: picks[0].level, tokken: true, queue,
+        qIdx: 0, score: 0, streak: 0, maxStreak: 0, correctCount: 0,
+        xp: savedXP, rankIdx: savedRank, currentQ: null, qMistake: false, currentKey: null };
+  document.getElementById('hist-list').innerHTML = '';
+  updateRankDisplay();
+  showScreen('game');
+  window.playRecipe?.('questionStart');
+  loadQuestion();
+}
 function startLevel(level){
-  G={mode:G.mode,level,qIdx:0,score:0,streak:0,maxStreak:0,correctCount:0,xp:savedXP,rankIdx:savedRank,currentQ:null};
+  G={mode:G.mode,level,qIdx:0,score:0,streak:0,maxStreak:0,correctCount:0,xp:savedXP,rankIdx:savedRank,currentQ:null,tokken:false,queue:null,qMistake:false,currentKey:null,seenDisplays:new Set()};
   document.getElementById('hist-list').innerHTML='';
   updateRankDisplay();
   showScreen('game');
@@ -1030,10 +1101,24 @@ function startLevel(level){
    問題ロード
 ══════════════════════════════════════════ */
 function loadQuestion(){
-  const q=G.currentQ=genQ(G.mode,G.level);
+  let q;
+  if(G.tokken){
+    q = G.currentQ = G.queue[G.qIdx];
+  } else {
+    q = G.currentQ = genQ(G.mode,G.level);
+    let guard = 0;
+    while(G.seenDisplays && G.seenDisplays.has(q.display) && guard < 10){
+      q = G.currentQ = genQ(G.mode,G.level); guard++;
+    }
+    if(G.seenDisplays) G.seenDisplays.add(q.display);
+  }
   q.isInt=(q.ansD===1);
+  G.qMistake = false;
+  G.currentKey = mistakeKey(q);
 
-  document.getElementById('q-lbl').textContent=`問 ${G.qIdx+1}　${G.mode==='mul'?'かけ算':'わり算'} Lv.${G.level}`;
+  document.getElementById('q-lbl').textContent = G.tokken
+    ? `とっくん ${G.qIdx+1}問目　${q.mode==='mul'?'かけ算':'わり算'}`
+    : `問 ${G.qIdx+1}　${G.mode==='mul'?'かけ算':'わり算'} Lv.${G.level}`;
   document.getElementById('q-prob').innerHTML=q.html;
 
   buildSteps(q);
@@ -1422,7 +1507,10 @@ function freezeStep(sid){
   row.querySelectorAll('.chk-btn').forEach(el=>el.style.display='none');
 }
 
-function setFbS(el,cls,msg){el.className='s-fb '+cls;el.textContent=msg;}
+function setFbS(el,cls,msg){
+  el.className='s-fb '+cls;el.textContent=msg;
+  if(cls==='ng' && !/入力してね|入れてね/.test(msg)) G.qMistake = true;
+}
 function markNG(id){
   const el=document.getElementById(id);
   if(!el) return;
@@ -1492,6 +1580,7 @@ function submitAns(){
 }
 
 function markNGAns(){
+  G.qMistake = true;
   ['ans-int','ans-n','ans-d'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.classList.add('ng');setTimeout(()=>el.classList.remove('ng'),500);}
@@ -1499,6 +1588,8 @@ function markNGAns(){
 }
 
 function correct(){
+  if(G.tokken){ if(!G.qMistake) removeMistake(G.currentKey); }
+  else if(G.qMistake) recordMistake(G.currentQ);
   G.streak++;
   G.maxStreak=Math.max(G.maxStreak,G.streak);
   G.correctCount++;
@@ -1521,6 +1612,7 @@ function correct(){
 }
 
 function wrong(msg){
+  if(!G.tokken) recordMistake(G.currentQ);
   G.streak=0;
   updateHUD();
   addHist(false,0);
@@ -1612,9 +1704,11 @@ function updateHUD(){
   if(G.streak>=3){b.textContent=`×${G.streak}🔥`;b.classList.add('on');}
   else b.classList.remove('on');
 }
+function sessionTotal(){ return G.tokken ? G.queue.length : QPL; }
 function updateProgress(){
-  document.getElementById('prog-fill').style.width=(G.qIdx/QPL*100)+'%';
-  document.getElementById('prog-text').textContent=`${G.qIdx+1} / ${QPL}`;
+  const total = sessionTotal();
+  document.getElementById('prog-fill').style.width=(G.qIdx/total*100)+'%';
+  document.getElementById('prog-text').textContent=`${G.qIdx+1} / ${total}`;
 }
 function addHist(ok,pts){
   const q=G.currentQ, list=document.getElementById('hist-list');
@@ -1647,17 +1741,33 @@ function spawnFX(e){
 ══════════════════════════════════════════ */
 function nextQuestion(){
   G.qIdx++;
-  if(G.qIdx>=QPL) showResult();
+  if(G.qIdx>=sessionTotal()) showResult();
   else loadQuestion();
 }
 function confirmBack(){if(confirm('タイトルに戻りますか？'))showScreen('title');}
 function showResult(){
-  const pct=G.correctCount/QPL, stars=pct>=.9?3:pct>=.6?2:1;
+  const total = sessionTotal();
+  const pct=G.correctCount/total, stars=pct>=.9?3:pct>=.6?2:1;
+  if(G.tokken){
+    window.playRecipe?.('clear');
+    document.getElementById('res-char').textContent='🎯';
+    document.getElementById('res-title').textContent='とっくん完了！';
+    document.getElementById('res-stars').textContent = fmMistakes.length
+      ? `のこりの とっくん：${fmMistakes.length}問` : '🎉 まちがえた問題を ぜんぶ克服！';
+    document.getElementById('res-score').textContent=G.score;
+    document.getElementById('res-corr').textContent=`${G.correctCount}/${total}`;
+    document.getElementById('res-combo').textContent=G.maxStreak;
+    const rr=RANKS[G.rankIdx]||RANKS[0];
+    document.getElementById('res-rank').innerHTML=`<div style="text-align:center">とっくんでは、まちがえた問題を そのまま もう一度解くよ。<br>正解できた問題は とっくんから消えるよ。</div>`;
+    showScreen('result');
+    return;
+  }
   const key=`${G.mode}_${G.level}`;
   if(!lvStars[key]||lvStars[key]<stars){lvStars[key]=stars;localStorage.setItem('fm_stars',JSON.stringify(lvStars));}
   if(G.score>savedHi){savedHi=G.score;localStorage.setItem('fm_hi',savedHi);}
   grantLevelBadge(G.level);
   window.playRecipe?.(stars===3?'stageClear':'clear');
+  document.getElementById('res-title').textContent='ステージクリア！';
   document.getElementById('res-char').textContent=stars===3?'👑':stars===2?'🌟':'😊';
   document.getElementById('res-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
   document.getElementById('res-score').textContent=G.score;
@@ -1681,14 +1791,26 @@ function showResult(){
     </div>`;
   spawnFX('🎊');showScreen('result');
 }
-function retryLevel(){startLevel(G.level);}
+function retryLevel(){ if(G.tokken){ startTokken(); } else { startLevel(G.level); } }
 
+function toggleSound(){
+  fmSettings.sound = !fmSettings.sound;
+  localStorage.setItem('fm_settings', JSON.stringify(fmSettings));
+  updateSoundBtn();
+  if(fmSettings.sound) window.playRecipe?.('decide');
+}
+function updateSoundBtn(){
+  const b = document.getElementById('sound-toggle');
+  if(b) b.textContent = fmSettings.sound ? '♪ 音 ON' : '♪ 音 OFF';
+}
 document.getElementById('title-hi').textContent=savedHi;
 // 初期表示
 (function(){
   const idx=getRankIdx(savedXP);
   savedRank=idx;
   updateTitleRank();
+  updateTokkenRow();
+  updateSoundBtn();
   renderRecentBadge();
   renderBadgeBook();
 })();
