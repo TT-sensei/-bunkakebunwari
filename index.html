@@ -504,7 +504,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 #screen-title .mode-card:hover{transform:translateY(-5px) scale(1.04)}
 #screen-title .title-rank-card{order:3}
 /* タイトル画面を1画面に収める詰め調整 */
-#screen-title{gap:12px}
+#screen-title{gap:10px}
 #screen-title .title-char{font-size:clamp(2.6rem,7vw,4.2rem)}
 #screen-title .mode-card{min-height:124px}
 #screen-title .title-recent{padding:8px 14px}
@@ -514,6 +514,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 #screen-title .title-logo{font-size:clamp(2rem,6vw,3rem)}
 #screen-title .mode-card{padding-top:18px;padding-bottom:18px}
 #screen-title .title-rank-card{padding:12px 20px}
+.title-head{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;width:100%;max-width:760px}
+.title-scene{width:min(318px,80vw);aspect-ratio:3/2;object-fit:cover;border-radius:20px;box-shadow:0 10px 28px rgba(59,130,246,.20);background:#eaf2ff}
+.title-head-text{text-align:center}
 .title-recent{order:2;width:100%;max-width:620px;display:flex;align-items:center;gap:14px;padding:10px 14px;background:rgba(255,255,255,.9);border:2px solid #dbeafe;border-radius:18px;box-shadow:var(--sh)}
 .title-recent-copy{flex:1;text-align:left}
 .title-recent-kicker{font-size:.72rem;color:var(--muted);font-weight:800;letter-spacing:.08em}
@@ -581,11 +584,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <!-- ════ タイトル ════ -->
 <div class="screen active" id="screen-title">
-  <div class="title-char">🧮</div>
-  <div>
-    <div class="title-logo">分数マスター</div>
-    <div class="title-sub">かけ算・わり算 冒険ゲーム</div>
+  <div class="title-head">
+    <img class="title-scene" id="topScene" alt="ナビキャラが一緒に学んでいる場面">
+    <div class="title-head-text">
+      <div class="title-logo">分数マスター</div>
+      <div class="title-sub">かけ算・わり算 冒険ゲーム</div>
+    </div>
   </div>
+  <script>
+    (function(){
+      var scenes = [
+        'https://tt-sensei.github.io/navi-character-/assets/groups/learning/trio-learning-discussion-riku-saku-kai.png',
+        'https://tt-sensei.github.io/navi-character-/assets/groups/learning/pair-learning-tablet-sora-nami.png',
+        'https://tt-sensei.github.io/navi-character-/assets/groups/learning/pair-learning-ruler-sora-riku.png'
+      ];
+      document.getElementById('topScene').src = scenes[Math.floor(Math.random() * scenes.length)];
+    })();
+  </script>
 
   <!-- ランクカード -->
   <div class="title-rank-card" id="title-rank-card">
